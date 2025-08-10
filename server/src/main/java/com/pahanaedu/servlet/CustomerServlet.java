@@ -8,7 +8,7 @@ import javax.servlet.http.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pahanaedu.dao.CustomerDAO;
 import com.pahanaedu.model.Customer;
-import com.pahanaedu.util.JsonUtil;
+import com.pahanaedu.util.Util;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,37 +21,74 @@ public class CustomerServlet extends HttpServlet {
     private CustomerDAO customerDAO = new CustomerDAO();
 
 
-    private ObjectMapper objectMapper = JsonUtil.getObjectMapper(); // For JSON
+    private ObjectMapper objectMapper = Util.getObjectMapper(); // For JSON
 
    
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String pathInfo = req.getPathInfo(); // e.g., /123 or /search or /top
+
+        try {
+        	 
+        String pathInfo = req.getPathInfo(); // e.g., /123 or /search or /telephone
         resp.setContentType("application/json");
 
-        if (pathInfo == null || pathInfo.equals("/")) {
-            // List all customers with pagination (e.g. /api/customers)
-            List<Customer> customers = customerDAO.getAllCustomers();
+        if (pathInfo == null || pathInfo.equals("/")) { 
+        	
+            // List all customers with pagination (e.g. /api/customers?page=1)
+            int page = 1;
+            String pageParam = req.getParameter("page");
+            if (pageParam != null) page = Integer.parseInt(pageParam);
+            
+            List<Customer> customers = customerDAO.getAllCustomers(page);
             resp.getWriter().write(objectMapper.writeValueAsString(customers));
+            
             return;
         }
 
         String[] splits = pathInfo.split("/");
+
         if (splits.length >= 2) {
             String action = splits[1];
 
             switch (action) {
-                case "search": {
-                    // /api/customers/search?name=John
-                    String name = req.getParameter("name");
-                   
-                    List<Customer> customers = customerDAO.getCustomersByName(name);
-                    resp.getWriter().write(objectMapper.writeValueAsString(customers));
-                    break;
+            case "search": {  // /api/customers/search?name=John&page=1
+            	
+                String name = req.getParameter("name");
+                if(name == null || name.isBlank()) {
+                    resp.setStatus(HttpServletResponse.SC_BAD_REQUEST); 
+                    resp.getWriter().write("{\"error\":\"Name parameter not found\"}");
+                    return; 
                 }
-                case "telephone": {
-                    // /api/customers/telephone?number=123456789
+                
+                int page = 1;
+                String pageParam = req.getParameter("page");
+                if (pageParam != null) page = Integer.parseInt(pageParam);
+               
+                List<Customer> customers = customerDAO.getCustomersByName(name,page); 
+                resp.getWriter().write(objectMapper.writeValueAsString(customers));
+                
+                break;
+            }
+            case "active": {  // /api/customers/active 
+                
+                int page = 1;
+                String pageParam = req.getParameter("page");
+                if (pageParam != null) page = Integer.parseInt(pageParam);
+               
+                List<Customer> customers = customerDAO.getActiveCustomers(page); 
+                resp.getWriter().write(objectMapper.writeValueAsString(customers));
+                
+                break;
+            }
+                case "telephone": { // /api/customers/telephone?number=123456789
+                	
                     String number = req.getParameter("number");
+                    if(number == null || number.isBlank()) {
+                        resp.setStatus(HttpServletResponse.SC_BAD_REQUEST); 
+                        resp.getWriter().write("{\"error\":\"Number parameter not found\"}");
+                        return; 
+                    }
+                    
                     Customer customer = customerDAO.getCustomerByTelephone(number);
                     if (customer != null) {
                         resp.getWriter().write(objectMapper.writeValueAsString(customer));
@@ -59,88 +96,112 @@ public class CustomerServlet extends HttpServlet {
                         resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                         resp.getWriter().write("{\"error\":\"Customer not found\"}");
                     }
+                    
                     break;
                 } 
-                default: {
-                    // Assume it's an id /api/customers/123
+                default: { // it's an id /api/customers/123
                     try {
+                    	
                         Long id = Long.parseLong(action);
                         Customer customer = customerDAO.getCustomerById(id);
+                        
                         if (customer != null) {
                             resp.getWriter().write(objectMapper.writeValueAsString(customer));
                         } else {
                             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                             resp.getWriter().write("{\"error\":\"Customer not found\"}");
                         }
+                        
                     } catch (NumberFormatException e) {
+                    	
                         resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                         resp.getWriter().write("{\"error\":\"Invalid customer id\"}");
+                        
                     }
                     break;
                 }
             }
         }
+        } catch(Exception e) {
+            e.printStackTrace();
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write("{\"error\":\"Internal server error\"}");
+            
+        }
+        
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // Add new customer
-        Customer customer = objectMapper.readValue(req.getReader(), Customer.class);
- 
-        // Set default isActive if not set
-        if (customer.getIsActive() == null) {
-            customer.setIsActive(true);
-        }
+    	try {
 
-        customerDAO.createCustomer(customer);
-        resp.setStatus(HttpServletResponse.SC_CREATED);
-        resp.getWriter().write(objectMapper.writeValueAsString(customer));
+            Customer customer = Util.parseJsonBody(req, Customer.class);
+	    	if(customer == null) {
+	    		 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST); 
+	             resp.getWriter().write("{\"error\":\"Customer object validation failed\"}");
+	             return; 
+	    	}
+	    	
+	    	if(Util.anyNullOrEmpty(customer.getName(), customer.getTelephone(), customer.getAddress())) {
+	    		 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST); 
+	             resp.getWriter().write("{\"error\":\"Missing required field\"}");
+	             return; 
+	    	}
+	        Customer existing = customerDAO.getCustomerByTelephone(customer.getTelephone());
+	        if (existing != null) {
+	            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+	            resp.getWriter().write("{\"error\":\"Customer already existed\"}");
+	            return;
+	        }
+		
+	    	 
+	        customerDAO.createCustomer(customer);
+	        resp.setStatus(HttpServletResponse.SC_CREATED);
+	        resp.getWriter().write(objectMapper.writeValueAsString(customer));
+	        
+	    } catch(Exception e) {
+	        e.printStackTrace();
+	        resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+	        resp.getWriter().write("{\"error\":\"Internal server error\"}");
+	        
+	    }
     }
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // Update existing customer - expects full Customer JSON with valid ID
-        Customer customer = objectMapper.readValue(req.getReader(), Customer.class);
-        if (customer.getId() == null) {
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Customer id is required for update\"}");
-            return;
-        }
-        Customer existing = customerDAO.getCustomerById(customer.getId());
-        if (existing == null) {
-            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            resp.getWriter().write("{\"error\":\"Customer not found\"}");
-            return;
-        }
-
-        
-
-        customerDAO.updateCustomer(customer);
-        resp.getWriter().write(objectMapper.writeValueAsString(customer));
+        try{
+        	
+	        // Update existing customer - expects full Customer JSON with valid ID
+	        Customer customer = Util.parseJsonBody(req, Customer.class);
+	    	if(customer == null) {
+	    		 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST); 
+	             resp.getWriter().write("{\"error\":\"Customer object validation failed\"}");
+	             return; 
+	    	}
+	    	
+	        if (customer.getId() == null) {
+	            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+	            resp.getWriter().write("{\"error\":\"Customer id is required for update\"}");
+	            return;
+	        }
+	        Customer existing = customerDAO.getCustomerById(customer.getId());
+	        if (existing == null) {
+	            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+	            resp.getWriter().write("{\"error\":\"Customer not found\"}");
+	            return;
+	        }
+	
+	        
+	
+	        customerDAO.updateCustomer(customer);
+	        resp.getWriter().write(objectMapper.writeValueAsString(customer));
+	        
+	    } catch(Exception e) {
+	        e.printStackTrace();
+	        resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+	        resp.getWriter().write("{\"error\":\"Internal server error\"}");
+	        
+	    }
     }
-
-    @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // Delete by id: /api/customers/{id}
-        String pathInfo = req.getPathInfo();
-        if (pathInfo == null || pathInfo.equals("/")) {
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Customer id required\"}");
-            return;
-        }
-        String[] splits = pathInfo.split("/");
-        if (splits.length < 2) {
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Customer id required\"}");
-            return;
-        }
-        try {
-            Long id = Long.parseLong(splits[1]);
-            customerDAO.deleteCustomer(id);
-            resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
-        } catch (NumberFormatException e) {
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Invalid customer id\"}");
-        }
-    }
+ 
 }

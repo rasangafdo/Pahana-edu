@@ -15,13 +15,17 @@ public abstract class User {
  
     protected String address;
     
-    protected Boolean isActive  = true;
+    protected Boolean isActive;
     
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     protected LocalDateTime lastUpdated;
      
     
     // Getters and Setters
+
+    public void setId(Long id) {
+    	this.id = id;
+    }
     
     public Long getId() {
     	return id;
@@ -33,8 +37,7 @@ public abstract class User {
     }
 
     public void setName(String name) {
-        this.name = name;
-        this.lastUpdated = LocalDateTime.now();
+        this.name = name; 
     }
 
     public String getTelephone() {
@@ -42,8 +45,7 @@ public abstract class User {
     }
 
     public void setTelephone(String telephone) {
-        this.telephone = telephone;
-        this.lastUpdated = LocalDateTime.now();
+        this.telephone = telephone; 
     }
 
     public String getAddress() {
@@ -51,8 +53,7 @@ public abstract class User {
     }
 
     public void setAddress(String address) {
-        this.address = address;
-        this.lastUpdated = LocalDateTime.now();
+        this.address = address; 
     }
 
     public Boolean getIsActive() {
@@ -60,8 +61,11 @@ public abstract class User {
     }
 
     public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-        this.lastUpdated = LocalDateTime.now();
+        this.isActive = isActive; 
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated =  lastUpdated;
     }
 
     public LocalDateTime getLastUpdated() {

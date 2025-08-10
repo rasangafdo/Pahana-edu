@@ -1,76 +1,215 @@
 package com.pahanaedu.dao;
 
 import com.pahanaedu.model.Customer;
+import com.pahanaedu.util.DBConnection;
+import com.pahanaedu.util.Util;
 
-import java.lang.reflect.Field;
-
+import java.sql.*;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CustomerDAO {
 
-    // This will act as our "database"
-    private static final List<Customer> customers = new ArrayList<>();
-    private static long idCounter = 1; // simulate auto-increment IDs
- 
-    public List<Customer> getAllCustomers() {
-        
+    // Get all customers
+	public List<Customer> getAllCustomers(int pageNumber) {
+	    List<Customer> customers = new ArrayList<>();
+	    int offset = (pageNumber - 1) * 20;
+	    String sql = "SELECT * FROM customers ORDER BY lastUpdated DESC LIMIT 20 OFFSET ?";
+
+	    try (Connection conn = DBConnection.getInstance().getConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+	        stmt.setInt(1, offset);
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            while (rs.next()) {
+	                customers.add(mapResultSetToCustomer(rs));
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return customers;
+	}
+
+    // Get customer by telephone
+    public Customer getCustomerByTelephone(String telephone) {
+        String sql = "SELECT * FROM customers WHERE telephone = ?";
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, telephone);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToCustomer(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // Search customers by name (partial match)
+    public List<Customer> getCustomersByName(String name, int pageNumber) {
+        List<Customer> customers = new ArrayList<>();
+        int offset = (pageNumber - 1) * 20;
+        String sql = "SELECT * FROM customers WHERE LOWER(name) LIKE ? ORDER BY lastUpdated DESC LIMIT 20 OFFSET ?";
+
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, "%" + name.toLowerCase() + "%");
+            stmt.setInt(2, offset);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    customers.add(mapResultSetToCustomer(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return customers;
     }
 
-    // Find by telephone
-    public Customer getCustomerByTelephone(String telephone) {
-        return customers.stream()
-                .filter(c -> c.getTelephone().equals(telephone))
-                .findFirst()
-                .orElse(null);
-    }
+    // Get active customers 
+    public List<Customer> getActiveCustomers(int pageNumber) {
+        List<Customer> customers = new ArrayList<>();
+        int offset = (pageNumber - 1) * 20;
+        String sql = "SELECT * FROM customers WHERE isActive = TRUE ORDER BY lastUpdated DESC LIMIT 20 OFFSET ?";
 
-    // Search by name
-    public List<Customer> getCustomersByName(String name) {
-        List<Customer> filtered = customers.stream()
-                .filter(c -> c.getName() != null && c.getName().toLowerCase().contains(name.toLowerCase()))
-                .sorted(Comparator.comparing(Customer::getLastUpdated).reversed())
-                .collect(Collectors.toList());
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+ 
+            stmt.setInt(1, offset);
 
-         return filtered;
-    }
-
-    // Create new customer
-    public void createCustomer(Customer customer) {
-        try{
-        Field idField = Customer.class.getSuperclass().getDeclaredField("id");
-        idField.setAccessible(true); // allow private/protected modification
-        idField.set(customer, idCounter++); 
-        customers.add(customer); 
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to set customer ID", e);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    customers.add(mapResultSetToCustomer(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        return customers;
     }
 
-    // Get by ID
+    // Create a new customer (returns generated id)
+    public long createCustomer(Customer customer) {
+        String sql = "INSERT INTO customers (name, telephone, address,  role) VALUES (?, ?, ?,  ?)";
+        long generatedId = -1;
+
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            stmt.setString(1, customer.getName());
+            stmt.setString(2, customer.getTelephone());
+            stmt.setString(3, customer.getAddress()); 
+            stmt.setString(4, customer.getRole().name());
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Creating customer failed, no rows affected.");
+            }
+
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    generatedId = generatedKeys.getLong(1);
+                    customer.setId(generatedId); // update model with generated id
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return generatedId;
+    }
+
+    // Get customer by ID
     public Customer getCustomerById(Long id) {
-        return customers.stream()
-                .filter(c -> c.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+        String sql = "SELECT * FROM customers WHERE id = ?";
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToCustomer(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     // Update existing customer
-    public void updateCustomer(Customer customer) {
-        for (int i = 0; i < customers.size(); i++) {
-            if (customers.get(i).getId().equals(customer.getId())) {
-                customers.set(i, customer);
-                return;
+    public boolean updateCustomer(Customer customer) {
+        String selectSql = "SELECT name, telephone, address, isActive FROM customers WHERE id = ?";
+        String updateSql = "UPDATE customers SET name=?, telephone=?, address=?, isActive=? WHERE id=?";
+
+        try (Connection conn = DBConnection.getInstance().getConnection()) {
+            // 1. Fetch current customer data
+            Customer oldCustomer = null;
+            try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+                selectStmt.setLong(1, customer.getId());
+                try (ResultSet rs = selectStmt.executeQuery()) {
+                    if (rs.next()) {
+                        oldCustomer = new Customer();
+                        oldCustomer.setName(rs.getString("name"));
+                        oldCustomer.setTelephone(rs.getString("telephone"));
+                        oldCustomer.setAddress(rs.getString("address"));
+                        oldCustomer.setIsActive(rs.getBoolean("isActive"));
+                    } else {
+                        // Customer not found
+                        return false;
+                    }
+                }
             }
+
+            // 2. Use old values if input is null or empty
+            String name = Util.anyNullOrEmpty(customer.getName()) ? oldCustomer.getName() : customer.getName();
+            String telephone = Util.anyNullOrEmpty(customer.getTelephone()) ? oldCustomer.getTelephone() : customer.getTelephone();
+            String address = Util.anyNullOrEmpty(customer.getAddress()) ? oldCustomer.getAddress() : customer.getAddress();
+            boolean isActive = Util.anyNullOrEmpty(customer.getIsActive()) ? oldCustomer.getIsActive() : customer.getIsActive();
+
+            // 3. Update with final values
+            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                updateStmt.setString(1, name);
+                updateStmt.setString(2, telephone);
+                updateStmt.setString(3, address);
+                updateStmt.setBoolean(4, isActive);
+                updateStmt.setLong(5, customer.getId());
+
+                int affectedRows = updateStmt.executeUpdate();
+                return affectedRows > 0;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
-    // Delete by ID
-    public void deleteCustomer(Long id) {
-        customers.removeIf(c -> c.getId().equals(id));
-    }
+
  
+ 
+
+
+    // Helper method to map ResultSet row to Customer object
+    private Customer mapResultSetToCustomer(ResultSet rs) throws SQLException {
+        Customer customer = new Customer();
+        customer.setId(rs.getLong("id"));
+        customer.setName(rs.getString("name"));
+        customer.setTelephone(rs.getString("telephone"));
+        customer.setAddress(rs.getString("address"));
+        customer.setIsActive(rs.getBoolean("isActive"));
+        Timestamp ts = rs.getTimestamp("lastUpdated");
+        if (ts != null) {
+            customer.setLastUpdated(ts.toLocalDateTime());
+        } 
+        return customer;
+    }
 }
