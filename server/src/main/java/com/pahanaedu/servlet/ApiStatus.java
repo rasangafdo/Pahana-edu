@@ -7,17 +7,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/**
- * Servlet implementation class Hello
- */
-@WebServlet("/Hello")
-public class Hello extends HttpServlet {
+@WebServlet("/api")
+public class ApiStatus extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public Hello() {
+    public ApiStatus() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -27,7 +24,7 @@ public class Hello extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		response.setContentType("text/plain");
-        response.getWriter().write("Hello, World!");
+        response.getWriter().write("Api Working!");
 	}
 
 	/**

@@ -1,8 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+        
     <wb-module deploy-name="pahana-edu">
+                
         <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
+                
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
+        <dependent-module archiveName="jackson-annotations-3.0-rc5.jar" deploy-path="lib" handle="module:/classpath/lib/src/main/webapp/lib/jackson-annotations-3.0-rc5.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="jackson-core-2.20.0-rc1.jar" deploy-path="lib" handle="module:/classpath/lib/src/main/webapp/lib/jackson-core-2.20.0-rc1.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="jackson-databind-2.20.0-rc1.jar" deploy-path="lib" handle="module:/classpath/lib/src/main/webapp/lib/jackson-databind-2.20.0-rc1.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="jakarta.persistence-api-3.1.0.jar" deploy-path="lib" handle="module:/classpath/lib/src/main/webapp/lib/jakarta.persistence-api-3.1.0.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="jakarta.validation-api-3.1.1.jar" deploy-path="lib" handle="module:/classpath/lib/src/main/webapp/lib/jakarta.validation-api-3.1.1.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="mysql-connector-j-9.4.0.jar" deploy-path="lib" handle="module:/classpath/lib/src/main/webapp/lib/mysql-connector-j-9.4.0.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+                
         <property name="context-root" value="pahana-edu"/>
+                
         <property name="java-output-path" value="/pahana-edu/build/classes"/>
+            
     </wb-module>
+    
 </project-modules>
