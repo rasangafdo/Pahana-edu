@@ -5,8 +5,9 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pahanaedu.dao.CustomerDAO;
+import com.fasterxml.jackson.databind.ObjectMapper; 
+import com.pahanaedu.dao.DaoFactory;
+import com.pahanaedu.dao.custom.CustomerDaoImpl;
 import com.pahanaedu.model.Customer;
 import com.pahanaedu.util.Util;
 
@@ -18,7 +19,7 @@ public class CustomerServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
 
-    private CustomerDAO customerDAO = new CustomerDAO();
+    private CustomerDaoImpl customerDAO =  (CustomerDaoImpl) DaoFactory.getInstance().getDao(DaoFactory.DaoTypes.CUSTOMER);
 
 
     private ObjectMapper objectMapper = Util.getObjectMapper(); // For JSON
@@ -39,7 +40,7 @@ public class CustomerServlet extends HttpServlet {
             String pageParam = req.getParameter("page");
             if (pageParam != null) page = Integer.parseInt(pageParam);
             
-            List<Customer> customers = customerDAO.getAllCustomers(page);
+            List<Customer> customers = customerDAO.getAll(page);
             resp.getWriter().write(objectMapper.writeValueAsString(customers));
             
             return;
@@ -103,7 +104,7 @@ public class CustomerServlet extends HttpServlet {
                     try {
                     	
                         Long id = Long.parseLong(action);
-                        Customer customer = customerDAO.getCustomerById(id);
+                        Customer customer = customerDAO.get(id);
                         
                         if (customer != null) {
                             resp.getWriter().write(objectMapper.writeValueAsString(customer));
@@ -155,9 +156,14 @@ public class CustomerServlet extends HttpServlet {
 	        }
 		
 	    	 
-	        customerDAO.createCustomer(customer);
+	        Boolean isCreated = customerDAO.create(customer);
+	        if(isCreated) {
 	        resp.setStatus(HttpServletResponse.SC_CREATED);
 	        resp.getWriter().write(objectMapper.writeValueAsString(customer));
+	        }else {
+	    		 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST); 
+	             resp.getWriter().write("{\"error\":\"Customer creation failed\"}");
+	        }
 	        
 	    } catch(Exception e) {
 	        e.printStackTrace();
@@ -184,7 +190,7 @@ public class CustomerServlet extends HttpServlet {
 	            resp.getWriter().write("{\"error\":\"Customer id is required for update\"}");
 	            return;
 	        }
-	        Customer existing = customerDAO.getCustomerById(customer.getId());
+	        Customer existing = customerDAO.get(customer.getId());
 	        if (existing == null) {
 	            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
 	            resp.getWriter().write("{\"error\":\"Customer not found\"}");
@@ -193,7 +199,7 @@ public class CustomerServlet extends HttpServlet {
 	
 	        
 	
-	        customerDAO.updateCustomer(customer);
+	        customerDAO.update(customer);
 	        resp.getWriter().write(objectMapper.writeValueAsString(customer));
 	        
 	    } catch(Exception e) {
