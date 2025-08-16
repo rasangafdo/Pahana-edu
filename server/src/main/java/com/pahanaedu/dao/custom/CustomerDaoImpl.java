@@ -146,9 +146,8 @@ public class CustomerDaoImpl implements  CustomerDao{
 	        }
 	        return customers;
 	}
-
-	@Override
-	public Customer mapResultSetToCustomer(ResultSet rs) throws SQLException {
+ 
+	private Customer mapResultSetToCustomer(ResultSet rs) throws SQLException {
 		 Customer customer = new Customer();
 	        customer.setId(rs.getLong("id"));
 	        customer.setName(rs.getString("name"));

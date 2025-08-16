@@ -1,6 +1,6 @@
 package com.pahanaedu.dao;
 
-import com.pahanaedu.dao.custom.CustomerDaoImpl;
+import com.pahanaedu.dao.custom.*;
 
 public class DaoFactory {
 
@@ -18,14 +18,16 @@ public class DaoFactory {
 
     public SuperDao getDao(DaoTypes type) {
         switch (type) {
-            case CUSTOMER:
-                return new CustomerDaoImpl(); 
+        case CUSTOMER:
+            return new CustomerDaoImpl(); 
+        case STAFF:
+            return new StaffDaoImpl(); 
             default:
                 return null;
         }
     }
 
     public enum DaoTypes {
-        CUSTOMER;
+        CUSTOMER, STAFF;
     }
 }
