@@ -1,14 +1,13 @@
 package com.pahanaedu.model;
 
-import java.time.LocalDateTime;
-
 import com.pahanaedu.model.role.CustomerRole;
+import java.time.LocalDateTime;
  
 public class Customer extends User {
  
     private CustomerRole role = CustomerRole.CUSTOMER; // Always CUSTOMER
 
-    // ✅ No-argument constructor for Jackson
+    // No-argument constructor for Jackson
     public Customer() {
         this.role = CustomerRole.CUSTOMER;
     }
