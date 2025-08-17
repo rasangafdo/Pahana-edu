@@ -18,8 +18,16 @@ public class DaoFactory {
 
     public SuperDao getDao(DaoTypes type) {
         switch (type) {
+        case CATEGORY:
+            return new CategoryDaoImpl(); 
         case CUSTOMER:
             return new CustomerDaoImpl(); 
+        case ITEM:
+            return new ItemDaoImpl(); 
+        case SALE:
+            return new SaleDaoImpl();
+        case SALEITEM:
+            return new SaleItemDaoImpl(); 
         case STAFF:
             return new StaffDaoImpl(); 
             default:
@@ -28,6 +36,6 @@ public class DaoFactory {
     }
 
     public enum DaoTypes {
-        CUSTOMER, STAFF;
+    	 CATEGORY,CUSTOMER, ITEM,SALE,SALEITEM, STAFF;
     }
 }
