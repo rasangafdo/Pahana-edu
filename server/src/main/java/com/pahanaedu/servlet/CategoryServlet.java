@@ -103,7 +103,8 @@ public class CategoryServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            Category category = Util.parseJsonBody(req, Category.class);
+            Category dto = Util.parseJsonBody(req, Category.class);
+            Category category = new Category(dto.getName()); 
             if (category == null || category.getName() == null || category.getName().isBlank()) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write("{\"error\":\"Category name required\"}");
@@ -116,8 +117,7 @@ public class CategoryServlet extends HttpServlet {
                 resp.getWriter().write("{\"error\":\"Category already exists\"}");
                 return;
             }
-
-            category.setLastUpdatedAt(java.time.LocalDateTime.now());
+ 
             boolean created = categoryDAO.create(category);
 
             if (created) {
@@ -151,8 +151,11 @@ public class CategoryServlet extends HttpServlet {
                 resp.getWriter().write("{\"error\":\"Category not found\"}");
                 return;
             }
-
-            category.setLastUpdatedAt(java.time.LocalDateTime.now());
+            if (category.getName() != null && categoryDAO.existsByNameExcludingId(category.getName(), category.getCategoryId())) {
+                resp.setStatus(HttpServletResponse.SC_CONFLICT);
+                resp.getWriter().write("{\"error\":\"Another category with this name already exists\"}");
+                return;
+            } 
             categoryDAO.update(category);
             resp.getWriter().write(objectMapper.writeValueAsString(category));
 

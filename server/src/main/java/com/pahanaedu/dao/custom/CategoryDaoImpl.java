@@ -14,16 +14,16 @@ public class CategoryDaoImpl implements CategoryDao {
     @Override
     public boolean create(Category t) throws Exception {
         return CrudUtil.executeUpdate(
-            "INSERT INTO category (name, last_updated_at) VALUES (?, ?)",
-            t.getName(), t.getLastUpdatedAt()
+            "INSERT INTO category (name) VALUES (?)",
+            t.getName()
         );
     }
 
     @Override
     public boolean update(Category t) throws Exception {
         return CrudUtil.executeUpdate(
-            "UPDATE category SET name = ?, last_updated_at = ? WHERE category_id = ?",
-            t.getName(), t.getLastUpdatedAt(), t.getCategoryId()
+            "UPDATE category SET name = ?,WHERE category_id = ?",
+            t.getName(), t.getCategoryId()
         );
     }
 
@@ -82,6 +82,19 @@ public class CategoryDaoImpl implements CategoryDao {
         }
         return false;
     }
+
+    @Override
+    public boolean existsByNameExcludingId(String name, Long excludeId) throws Exception {
+        ResultSet rs = CrudUtil.executeQuery(
+            "SELECT COUNT(*) FROM category WHERE name = ? AND category_id <> ?",
+            name, excludeId
+        );
+        if (rs.next()) {
+            return rs.getInt(1) > 0;
+        }
+        return false;
+    }
+
 
     @Override
     public List<Category> getRecentlyUpdated(int limit) throws Exception {

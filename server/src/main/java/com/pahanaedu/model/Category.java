@@ -9,6 +9,12 @@ public class Category {
     private Long categoryId;
     private String name;
     private LocalDateTime lastUpdatedAt;
+    
+    public Category() {}
+    
+    public Category(String name) {
+    	this.name = name;
+    }
 
 //    @OneToMany(mappedBy = "category")
     private List<Item> items;

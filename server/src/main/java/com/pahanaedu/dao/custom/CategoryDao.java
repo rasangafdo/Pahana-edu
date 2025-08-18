@@ -15,6 +15,8 @@ public interface CategoryDao extends CrudDao<Category, Long> {
 
 	boolean existsByName(String name) throws Exception;
 	// Check if a category with a given name exists
+	
+	boolean existsByNameExcludingId(String name, Long excludeId) throws Exception;
 
 	List<Category> getRecentlyUpdated(int limit) throws Exception;
 	// Get categories ordered by last_updated_at DESC
