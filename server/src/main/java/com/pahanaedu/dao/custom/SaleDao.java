@@ -7,4 +7,5 @@ import com.pahanaedu.model.Customer;
 
 public interface SaleDao extends CrudDao<Sale, Long> {
     List<Sale> getSalesByCustomer(Customer customer, int pageNumber) throws Exception;
+    boolean updatePayment(Long saleId, double paidAmount, double balance) throws Exception;
 }

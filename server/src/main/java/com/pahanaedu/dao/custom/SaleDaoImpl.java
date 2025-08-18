@@ -7,8 +7,7 @@ import java.util.List;
 
 import com.pahanaedu.dao.CrudUtil;
 import com.pahanaedu.model.Customer; 
-import com.pahanaedu.model.Sale;
-import com.pahanaedu.util.Util;
+import com.pahanaedu.model.Sale; 
 
 public class SaleDaoImpl implements SaleDao {
 
@@ -25,39 +24,16 @@ public class SaleDaoImpl implements SaleDao {
         );
     }
 
-    @Override
-    public boolean update(Sale sale) throws Exception {
-        
-        ResultSet rs = CrudUtil.executeQuery(
-                "SELECT * FROM sales WHERE sale_id = ?",
-                sale.getSaleId()
-            );
-
-            if (!rs.next()) {
-                return false; // not found
-            }
-
-            Sale oldSale = mapResultSetToSale(rs);
-
-            // Use old values if null/empty
-            Long customerId =  Util.anyNullOrEmpty(sale.getCustomerId())  ? oldSale.getCustomerId() : sale.getCustomerId();
-            Double totalAmount = Util.anyNullOrEmpty(sale.getTotalAmount()) ? oldSale.getTotalAmount() : sale.getTotalAmount();
-            Double totalDiscount = Util.anyNullOrEmpty(sale.getTotalDiscount()) ? oldSale.getTotalDiscount() : oldSale.getTotalDiscount();
-            Double subTotal = Util.anyNullOrEmpty(sale.getSubTotal())  ? oldSale.getSubTotal() : oldSale.getSubTotal();
-            Double paid = Util.anyNullOrEmpty(sale.getPaid()) ? oldSale.getPaid() : oldSale.getPaid();
-            Double balance = Util.anyNullOrEmpty(sale.getBalance()) ? oldSale.getBalance() : oldSale.getBalance();
-                       
-            return CrudUtil.executeUpdate(
-            "UPDATE sales SET customer_id=?, total_amount=?, total_discount=?, sub_total=?, paid=?, balance=? WHERE sale_id=?",
-            customerId,totalAmount,totalDiscount,subTotal,paid,balance,
-            sale.getSaleId()
+    public boolean updatePayment(Long saleId, double paidAmount, double balance) throws Exception {
+        return CrudUtil.executeUpdate(
+            "UPDATE sales SET paid_amount=?, balance=? WHERE sale_id=?",
+            paidAmount,
+            balance,
+            saleId
         );
     }
 
-    @Override
-    public boolean delete(Long id) throws Exception {
-        return CrudUtil.executeUpdate("DELETE FROM sales WHERE sale_id=?", id);
-    }
+ 
 
     @Override
     public Sale get(Long id) throws Exception {
@@ -81,21 +57,30 @@ public class SaleDaoImpl implements SaleDao {
         }
         return sales;
     }
-
+ 
     @Override
     public List<Sale> getSalesByCustomer(Customer customer, int pageNumber) throws Exception {
         List<Sale> sales = new ArrayList<>();
         int offset = (pageNumber - 1) * 20;
+
         ResultSet rs = CrudUtil.executeQuery(
-            "SELECT * FROM sales WHERE customer_id=? ORDER BY sale_date DESC, sale_time DESC LIMIT 20 OFFSET ?",
-            customer.getId(),
+            "SELECT s.*, c.id, c.telephone " +
+            "FROM sales s " +
+            "JOIN customers c ON s.customer_id = c.id " +
+            "WHERE c.telephone = ? " +
+            "ORDER BY s.sale_date DESC, s.sale_time DESC " +
+            "LIMIT 20 OFFSET ?",
+            customer.getTelephone(),
             offset
         );
-        while (rs.next()) {
-            sales.add(mapResultSetToSale(rs));
+
+        while (rs.next()) { 
+        	  sales.add(mapResultSetToSale(rs));
         }
+
         return sales;
     }
+
 
     private Sale mapResultSetToSale(ResultSet rs) throws SQLException {
         Sale sale = new Sale();
@@ -114,4 +99,16 @@ public class SaleDaoImpl implements SaleDao {
 
         return sale;
     }
+
+	@Override
+	public boolean update(Sale t) throws Exception {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean delete(Long id) throws Exception {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }
