@@ -114,21 +114,34 @@ public class ItemServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            Item item = Util.parseJsonBody(req, Item.class);
-            if (item == null || item.getName() == null || item.getName().isBlank()) {
+            Item item = Util.parseJsonBody(req, Item.class); 
+            
+            if (item == null) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Item name required\"}");
+                resp.getWriter().write("{\"error\":\"Item object required\"}");
                 return;
             }
 
+            // Now check all required fields using anyNullOrEmpty safely
+            if (Util.anyNullOrEmpty(
+                    item.getName(),
+                    item.getUnitPrice(),
+                    item.getStockAvailable(),
+                    item.getDiscount(),
+                    item.getQtyToAllowDiscount(),
+                    item.getCategoryId()
+            )) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\":\"All item parameters are required\"}");
+                return;
+            }
             // check duplicate
             if (itemDAO.existsByName(item.getName())) {
                 resp.setStatus(HttpServletResponse.SC_CONFLICT);
                 resp.getWriter().write("{\"error\":\"Item already exists\"}");
                 return;
             }
-
-            item.setLastUpdatedAt(java.time.LocalDateTime.now());
+ 
             boolean created = itemDAO.create(item);
 
             if (created) {
@@ -162,8 +175,12 @@ public class ItemServlet extends HttpServlet {
                 resp.getWriter().write("{\"error\":\"Item not found\"}");
                 return;
             }
-
-            item.setLastUpdatedAt(java.time.LocalDateTime.now());
+ 
+            if (item.getName()!= null && itemDAO.existsByNameExcludingId(item.getName(), item.getItemId())) {
+                resp.setStatus(HttpServletResponse.SC_CONFLICT);
+                resp.getWriter().write("{\"error\":\"Another item with this name already exists\"}");
+                return;
+            } 
             itemDAO.update(item);
             resp.getWriter().write(objectMapper.writeValueAsString(item));
 

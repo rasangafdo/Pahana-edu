@@ -25,4 +25,5 @@ public interface ItemDao extends CrudDao<Item, Long> {
 	boolean existsByName(String name) throws Exception;
 	// Check if item with name exists
 
+	boolean existsByNameExcludingId(String name, Long excludeId) throws Exception;
 }

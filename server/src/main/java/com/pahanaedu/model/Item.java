@@ -5,14 +5,14 @@ import java.time.LocalDateTime;
 public class Item { 
     private Long itemId;
     private String name;
-    private double unitPrice;
-    private int stockAvailable;
-    private double discount;
-    private int qtyToAllowDiscount;
+    private Double unitPrice;        
+    private Integer stockAvailable;  
+    private Double discount;         
+    private Integer qtyToAllowDiscount;  
     private LocalDateTime lastUpdatedAt;
 
 //    @ManyToOne
-    private Category category;
+    private Long categoryId;
     
     public Long getItemId() {
     	return itemId;
@@ -30,35 +30,35 @@ public class Item {
 		this.name = name;
 	}
 
-	public double getUnitPrice() {
+	public Double getUnitPrice() {
 		return unitPrice;
 	}
 
-	public void setUnitPrice(double unitPrice) {
+	public void setUnitPrice(Double unitPrice) {
 		this.unitPrice = unitPrice;
 	}
 
-	public int getStockAvailable() {
+	public Integer getStockAvailable() {
 		return stockAvailable;
 	}
 
-	public void setStockAvailable(int stockAvailable) {
+	public void setStockAvailable(Integer stockAvailable) {
 		this.stockAvailable = stockAvailable;
 	}
 
-	public double getDiscount() {
+	public Double getDiscount() {
 		return discount;
 	}
 
-	public void setDiscount(double discount) {
+	public void setDiscount(Double discount) {
 		this.discount = discount;
 	}
 
-	public int getQtyToAllowDiscount() {
+	public Integer getQtyToAllowDiscount() {
 		return qtyToAllowDiscount;
 	}
 
-	public void setQtyToAllowDiscount(int qtyToAllowDiscount) {
+	public void setQtyToAllowDiscount(Integer qtyToAllowDiscount) {
 		this.qtyToAllowDiscount = qtyToAllowDiscount;
 	}
 
@@ -70,12 +70,12 @@ public class Item {
 		this.lastUpdatedAt = lastUpdatedAt;
 	}
 
-	public Category getCategory() {
-		return category;
+	public Long getCategoryId() {
+		return categoryId;
 	}
 
-	public void setCategory(Category category) {
-		this.category = category;
+	public void setCategoryId(Long categoryId) {
+		this.categoryId = categoryId;
 	}
  
     

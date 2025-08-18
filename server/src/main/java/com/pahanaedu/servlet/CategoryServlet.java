@@ -103,8 +103,7 @@ public class CategoryServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            Category dto = Util.parseJsonBody(req, Category.class);
-            Category category = new Category(dto.getName()); 
+            Category category = Util.parseJsonBody(req, Category.class); 
             if (category == null || category.getName() == null || category.getName().isBlank()) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write("{\"error\":\"Category name required\"}");
