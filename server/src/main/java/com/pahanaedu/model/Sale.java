@@ -1,24 +1,22 @@
 package com.pahanaedu.model;
  
-import java.time.*;
-import java.util.List;
- 
+import java.time.*; 
 public class Sale { 
     private Long saleId;
 
 //    @ManyToOne
-    private User user;
+    private Long customerId;
+ 
 
-//    @OneToMany(mappedBy = "sale")
-    private List<SaleItem> items;
-
-    private double totalAmount;
-    private double totalDiscount;
-    private double subTotal;
-    private double paid;
-    private double balance;
+    private Double totalAmount;
+    private Double totalDiscount;
+    private Double subTotal;
+    private Double paid;
+    private Double balance;
     private LocalDate saleDate;
     private LocalTime saleTime;
+
+    private LocalDateTime lastUpdatedAt;
     
 	public Long getSaleId() {
 		return saleId;
@@ -26,43 +24,38 @@ public class Sale {
 	public void setSaleId(Long saleId) {
 		this.saleId = saleId;
 	}
-	public User getUser() {
-		return user;
+	public Long getCustomerId() {
+		return customerId;
 	}
-	public void setUser(User user) {
-		this.user = user;
-	}
-	public List<SaleItem> getItems() {
-		return items;
-	}
-	public void setItems(List<SaleItem> items) {
-		this.items = items;
-	}
-	public double getTotalAmount() {
+	public void setCustomerId(Long customerId) {
+		this.customerId = customerId;
+	} 
+	
+	public Double getTotalAmount() {
 		return totalAmount;
 	}
 	public void setTotalAmount(double totalAmount) {
 		this.totalAmount = totalAmount;
 	}
-	public double getTotalDiscount() {
+	public Double getTotalDiscount() {
 		return totalDiscount;
 	}
 	public void setTotalDiscount(double totalDiscount) {
 		this.totalDiscount = totalDiscount;
 	}
-	public double getSubTotal() {
+	public Double getSubTotal() {
 		return subTotal;
 	}
 	public void setSubTotal(double subTotal) {
 		this.subTotal = subTotal;
 	}
-	public double getPaid() {
+	public Double getPaid() {
 		return paid;
 	}
 	public void setPaid(double paid) {
 		this.paid = paid;
 	}
-	public double getBalance() {
+	public Double getBalance() {
 		return balance;
 	}
 	public void setBalance(double balance) {
@@ -80,6 +73,13 @@ public class Sale {
 	public void setSaleTime(LocalTime saleTime) {
 		this.saleTime = saleTime;
 	}
+	public LocalDateTime getLastUpdatedAt() {
+		return lastUpdatedAt;
+	}
+	public void setLastUpdatedAt(LocalDateTime lastUpdatedAt) {
+		this.lastUpdatedAt = lastUpdatedAt;
+	}
+    
     
     
     
