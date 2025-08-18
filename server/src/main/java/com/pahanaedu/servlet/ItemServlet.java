@@ -159,30 +159,105 @@ public class ItemServlet extends HttpServlet {
         }
     }
 
+ 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            Item item = Util.parseJsonBody(req, Item.class);
-            if (item == null || item.getItemId() == null) {
+            String pathInfo = req.getPathInfo(); // e.g., /123 or /updateStock
+            resp.setContentType("application/json");
+
+            if (pathInfo == null || pathInfo.equals("/")) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Item id required for update\"}");
+                resp.getWriter().write("{\"error\":\"Item ID or action required\"}");
                 return;
             }
 
-            Item existing = itemDAO.get(item.getItemId());
-            if (existing == null) {
-                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                resp.getWriter().write("{\"error\":\"Item not found\"}");
-                return;
+            String[] splits = pathInfo.split("/");
+
+            if (splits.length >= 2) {
+                String action = splits[1];
+
+                switch (action) {
+                    case "updateStock": { // /api/items/updateStock?id=123&stock=50
+                        String idParam = req.getParameter("id");
+                        String stockParam = req.getParameter("stock");
+                        if (idParam == null || stockParam == null) {
+                            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                            resp.getWriter().write("{\"error\":\"id and stock parameters required\"}");
+                            return;
+                        }
+                        Long id = Long.parseLong(idParam);
+                        int stock = Integer.parseInt(stockParam);
+                        Item item = itemDAO.get(id);
+                        if (item == null) {
+                            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                            resp.getWriter().write("{\"error\":\"Item not found\"}");
+                            return;
+                        }
+                        itemDAO.updateStock(id, stock);
+                        resp.getWriter().write(objectMapper.writeValueAsString(itemDAO.get(id)));
+                        break;
+                    }
+
+                    case "updateDiscount": { // /api/items/updateDiscount?id=123&discount=10&qty=2
+                        String idParam = req.getParameter("id");
+                        String discountParam = req.getParameter("discount");
+                        String qtyParam = req.getParameter("qty");
+                        if (idParam == null || discountParam == null || qtyParam == null) {
+                            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                            resp.getWriter().write("{\"error\":\"id, discount, and qty parameters required\"}");
+                            return;
+                        }
+                        Long id = Long.parseLong(idParam);
+                        double discount = Double.parseDouble(discountParam);
+                        int qty = Integer.parseInt(qtyParam);
+                        Item item = itemDAO.get(id);
+                        if (item == null) {
+                            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                            resp.getWriter().write("{\"error\":\"Item not found\"}");
+                            return;
+                        }
+                        itemDAO.updateDiscount(id, discount, qty);
+                        resp.getWriter().write(objectMapper.writeValueAsString(itemDAO.get(id)));
+                        break;
+                    }
+
+                    default: { // treat as item ID for general update /api/items/123
+                        try {
+                            Long id = Long.parseLong(action);
+                            Item existing = itemDAO.get(id);
+                            if (existing == null) {
+                                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                                resp.getWriter().write("{\"error\":\"Item not found\"}");
+                                return;
+                            }
+
+                            Item item = Util.parseJsonBody(req, Item.class);
+                            if (item == null) {
+                                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                                resp.getWriter().write("{\"error\":\"Invalid JSON body\"}");
+                                return;
+                            }
+
+                            // check name conflict
+                            if (item.getName() != null && itemDAO.existsByNameExcludingId(item.getName(), id)) {
+                                resp.setStatus(HttpServletResponse.SC_CONFLICT);
+                                resp.getWriter().write("{\"error\":\"Another item with this name already exists\"}");
+                                return;
+                            }
+
+                            item.setItemId(id); // ensure ID is set
+                            itemDAO.update(item);
+                            resp.getWriter().write(objectMapper.writeValueAsString(itemDAO.get(id)));
+
+                        } catch (NumberFormatException e) {
+                            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                            resp.getWriter().write("{\"error\":\"Invalid item id\"}");
+                        }
+                        break;
+                    }
+                }
             }
- 
-            if (item.getName()!= null && itemDAO.existsByNameExcludingId(item.getName(), item.getItemId())) {
-                resp.setStatus(HttpServletResponse.SC_CONFLICT);
-                resp.getWriter().write("{\"error\":\"Another item with this name already exists\"}");
-                return;
-            } 
-            itemDAO.update(item);
-            resp.getWriter().write(objectMapper.writeValueAsString(item));
 
         } catch (Exception e) {
             e.printStackTrace();
