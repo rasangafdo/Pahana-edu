@@ -1,7 +1,6 @@
 package com.pahanaedu.model;
  
-import java.time.LocalDateTime;
-import java.util.List;
+import java.time.LocalDateTime; 
  
 public class Category {
 //    @Id
@@ -14,10 +13,7 @@ public class Category {
     
     public Category(String name) {
     	this.name = name;
-    }
-
-//    @OneToMany(mappedBy = "category")
-    private List<Item> items;
+    } 
 
 	public Long getCategoryId() {
 		return categoryId;
@@ -41,14 +37,6 @@ public class Category {
 
 	public void setLastUpdatedAt(LocalDateTime lastUpdatedAt) {
 		this.lastUpdatedAt = lastUpdatedAt;
-	}
-
-	public List<Item> getItems() {
-		return items;
-	}
-
-	public void setItems(List<Item> items) {
-		this.items = items;
 	}
      
     

@@ -22,7 +22,7 @@ public class CategoryDaoImpl implements CategoryDao {
     @Override
     public boolean update(Category t) throws Exception {
         return CrudUtil.executeUpdate(
-            "UPDATE category SET name = ?,WHERE category_id = ?",
+            "UPDATE category SET name = ? WHERE category_id = ?",
             t.getName(), t.getCategoryId()
         );
     }

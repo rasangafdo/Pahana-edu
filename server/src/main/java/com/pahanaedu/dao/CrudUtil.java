@@ -22,6 +22,8 @@ public class CrudUtil {
     public static boolean executeUpdate(String sql, Object... args) throws Exception{
         return getPreparedStatement(sql, args).executeUpdate() > 0;
     }
+    
+    
     public static ResultSet executeQuery(String sql, Object... args) throws Exception{
         return getPreparedStatement(sql, args).executeQuery();
     }

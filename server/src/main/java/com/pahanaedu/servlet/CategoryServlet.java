@@ -151,7 +151,12 @@ public class CategoryServlet extends HttpServlet {
                 resp.getWriter().write("{\"error\":\"Category not found\"}");
                 return;
             }
-            if (category.getName() != null && categoryDAO.existsByNameExcludingId(category.getName(), category.getCategoryId())) {
+            if (category == null || category.getName() == null || category.getName().isBlank()) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\":\"Category name required\"}");
+                return;
+            }
+            if (categoryDAO.existsByNameExcludingId(category.getName(), category.getCategoryId())) {
                 resp.setStatus(HttpServletResponse.SC_CONFLICT);
                 resp.getWriter().write("{\"error\":\"Another category with this name already exists\"}");
                 return;
