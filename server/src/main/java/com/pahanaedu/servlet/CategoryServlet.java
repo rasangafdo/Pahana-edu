@@ -104,7 +104,7 @@ public class CategoryServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
             Category category = Util.parseJsonBody(req, Category.class); 
-            if (category == null || category.getName() == null || category.getName().isBlank()) {
+            if (category == null || Util.anyNullOrEmpty(category.getName())) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write("{\"error\":\"Category name required\"}");
                 return;
@@ -150,7 +150,7 @@ public class CategoryServlet extends HttpServlet {
                 resp.getWriter().write("{\"error\":\"Category not found\"}");
                 return;
             }
-            if (category == null || category.getName() == null || category.getName().isBlank()) {
+            if (category == null || Util.anyNullOrEmpty(category.getName())) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write("{\"error\":\"Category name required\"}");
                 return;
