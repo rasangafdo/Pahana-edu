@@ -12,6 +12,6 @@ public interface CustomerDao extends CrudDao<Customer, Long> {
 	
 	List<Customer> getActiveCustomers(int pageNumber) throws  Exception;
 	
-	
+	boolean existsByTeleExcludingId(String telephone, Long excludeId) throws Exception;
 	 
 }

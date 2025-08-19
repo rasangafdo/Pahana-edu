@@ -1,9 +1,8 @@
 package com.pahanaedu.servlet;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pahanaedu.dao.DaoFactory;
-import com.pahanaedu.dao.custom.ItemDaoImpl;
+import com.fasterxml.jackson.databind.ObjectMapper; 
 import com.pahanaedu.model.Item;
+import com.pahanaedu.service.ItemService;
 import com.pahanaedu.util.Util;
 
 import javax.servlet.ServletException;
@@ -16,7 +15,7 @@ import java.util.List;
 public class ItemServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    private final ItemDaoImpl itemDAO = (ItemDaoImpl) DaoFactory.getInstance().getDao(DaoFactory.DaoTypes.ITEM);
+    private final ItemService itemService = new ItemService();
     private final ObjectMapper objectMapper = Util.getObjectMapper();
 
     @Override
@@ -31,7 +30,7 @@ public class ItemServlet extends HttpServlet {
                 String pageParam = req.getParameter("page");
                 if (pageParam != null) page = Integer.parseInt(pageParam);
 
-                List<Item> items = itemDAO.getAll(page);
+                List<Item> items = itemService.getAll(page);
                 resp.getWriter().write(objectMapper.writeValueAsString(items));
                 return;
             }
@@ -53,7 +52,7 @@ public class ItemServlet extends HttpServlet {
                         String pageParam = req.getParameter("page");
                         if (pageParam != null) page = Integer.parseInt(pageParam);
 
-                        List<Item> items = itemDAO.searchByName(name, page);
+                        List<Item> items = itemService.searchByName(name, page);
                         resp.getWriter().write(objectMapper.writeValueAsString(items));
                         break;
                     }
@@ -69,7 +68,7 @@ public class ItemServlet extends HttpServlet {
                         String pageParam = req.getParameter("page");
                         if (pageParam != null) page = Integer.parseInt(pageParam);
 
-                        List<Item> items = itemDAO.getItemsByCategoryId(categoryId, page);
+                        List<Item> items = itemService.getItemsByCategoryId(categoryId, page);
                         resp.getWriter().write(objectMapper.writeValueAsString(items));
                         break;
                     }
@@ -81,14 +80,14 @@ public class ItemServlet extends HttpServlet {
                             return;
                         }
                         int threshold = Integer.parseInt(thresholdParam);
-                        List<Item> items = itemDAO.getLowStockItems(threshold);
+                        List<Item> items = itemService.getLowStockItems(threshold);
                         resp.getWriter().write(objectMapper.writeValueAsString(items));
                         break;
                     }
                     default: { // treat as id /api/items/123
                         try {
                             Long id = Long.parseLong(action);
-                            Item item = itemDAO.get(id);
+                            Item item = itemService.get(id);
                             if (item != null) {
                                 resp.getWriter().write(objectMapper.writeValueAsString(item));
                             } else {
@@ -104,7 +103,10 @@ public class ItemServlet extends HttpServlet {
                 }
             }
 
-        } catch (Exception e) {
+        } catch (IllegalStateException e) {
+            resp.setStatus(HttpServletResponse.SC_CONFLICT);
+            resp.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
+     } catch (Exception e) {
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().write("{\"error\":\"Internal server error\"}");
@@ -135,14 +137,8 @@ public class ItemServlet extends HttpServlet {
                 resp.getWriter().write("{\"error\":\"All item parameters are required\"}");
                 return;
             }
-            // check duplicate
-            if (itemDAO.existsByName(item.getName())) {
-                resp.setStatus(HttpServletResponse.SC_CONFLICT);
-                resp.getWriter().write("{\"error\":\"Item already exists\"}");
-                return;
-            }
- 
-            boolean created = itemDAO.create(item);
+            
+            boolean created = itemService.create(item);
 
             if (created) {
                 resp.setStatus(HttpServletResponse.SC_CREATED);
@@ -152,7 +148,10 @@ public class ItemServlet extends HttpServlet {
                 resp.getWriter().write("{\"error\":\"Failed to create item\"}");
             }
 
-        } catch (Exception e) {
+        } catch (IllegalStateException e) {
+            resp.setStatus(HttpServletResponse.SC_CONFLICT);
+            resp.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
+      } catch (Exception e) {
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().write("{\"error\":\"Internal server error\"}");
@@ -188,14 +187,14 @@ public class ItemServlet extends HttpServlet {
                         }
                         Long id = Long.parseLong(idParam);
                         int stock = Integer.parseInt(stockParam);
-                        Item item = itemDAO.get(id);
+                        Item item = itemService.get(id);
                         if (item == null) {
                             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                             resp.getWriter().write("{\"error\":\"Item not found\"}");
                             return;
                         }
-                        itemDAO.updateStock(id, stock);
-                        resp.getWriter().write(objectMapper.writeValueAsString(itemDAO.get(id)));
+                        itemService.updateStock(id, stock);
+                        resp.getWriter().write(objectMapper.writeValueAsString(itemService.get(id)));
                         break;
                     }
 
@@ -211,21 +210,21 @@ public class ItemServlet extends HttpServlet {
                         Long id = Long.parseLong(idParam);
                         double discount = Double.parseDouble(discountParam);
                         int qty = Integer.parseInt(qtyParam);
-                        Item item = itemDAO.get(id);
+                        Item item = itemService.get(id);
                         if (item == null) {
                             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                             resp.getWriter().write("{\"error\":\"Item not found\"}");
                             return;
                         }
-                        itemDAO.updateDiscount(id, discount, qty);
-                        resp.getWriter().write(objectMapper.writeValueAsString(itemDAO.get(id)));
+                        itemService.updateDiscount(id, discount, qty);
+                        resp.getWriter().write(objectMapper.writeValueAsString(itemService.get(id)));
                         break;
                     }
 
                     default: { // treat as item ID for general update /api/items/123
                         try {
                             Long id = Long.parseLong(action);
-                            Item existing = itemDAO.get(id);
+                            Item existing = itemService.get(id);
                             if (existing == null) {
                                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                                 resp.getWriter().write("{\"error\":\"Item not found\"}");
@@ -240,17 +239,20 @@ public class ItemServlet extends HttpServlet {
                             }
 
                             // check name conflict
-                            if (item.getName() != null && itemDAO.existsByNameExcludingId(item.getName(), id)) {
+                            if (item.getName() != null && itemService.existsByNameExcludingId(item.getName(), id)) {
                                 resp.setStatus(HttpServletResponse.SC_CONFLICT);
                                 resp.getWriter().write("{\"error\":\"Another item with this name already exists\"}");
                                 return;
                             }
 
                             item.setItemId(id); // ensure ID is set
-                            itemDAO.update(item);
-                            resp.getWriter().write(objectMapper.writeValueAsString(itemDAO.get(id)));
+                            itemService.update(item);
+                            resp.getWriter().write(objectMapper.writeValueAsString(itemService.get(id)));
 
-                        } catch (NumberFormatException e) {
+                        } catch (IllegalStateException e) {
+                            resp.setStatus(HttpServletResponse.SC_CONFLICT);
+                            resp.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
+                     } catch (NumberFormatException e) {
                             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                             resp.getWriter().write("{\"error\":\"Invalid item id\"}");
                         }
@@ -258,7 +260,10 @@ public class ItemServlet extends HttpServlet {
                     }
                 }
             }
-
+        } catch (IllegalStateException e) {
+            resp.setStatus(HttpServletResponse.SC_CONFLICT);
+            resp.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
+     
         } catch (Exception e) {
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -281,7 +286,7 @@ public class ItemServlet extends HttpServlet {
                 String idStr = splits[1];
                 try {
                     Long id = Long.parseLong(idStr);
-                    boolean deleted = itemDAO.delete(id);
+                    boolean deleted = itemService.delete(id);
 
                     if (deleted) {
                         resp.setStatus(HttpServletResponse.SC_NO_CONTENT);

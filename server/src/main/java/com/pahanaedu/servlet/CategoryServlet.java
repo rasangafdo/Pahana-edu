@@ -1,9 +1,8 @@
 package com.pahanaedu.servlet;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pahanaedu.dao.DaoFactory;
-import com.pahanaedu.dao.custom.CategoryDaoImpl;
+import com.fasterxml.jackson.databind.ObjectMapper; 
 import com.pahanaedu.model.Category;
+import com.pahanaedu.service.CategoryService;
 import com.pahanaedu.util.Util;
 
 import javax.servlet.ServletException;
@@ -16,9 +15,10 @@ import java.util.List;
 public class CategoryServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    private final CategoryDaoImpl categoryDAO = (CategoryDaoImpl) DaoFactory.getInstance().getDao(DaoFactory.DaoTypes.CATEGORY);
     private final ObjectMapper objectMapper = Util.getObjectMapper();
-
+    private final CategoryService categoryService = new CategoryService();
+    
+    
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
@@ -31,7 +31,7 @@ public class CategoryServlet extends HttpServlet {
                 String pageParam = req.getParameter("page");
                 if (pageParam != null) page = Integer.parseInt(pageParam);
 
-                List<Category> categories = categoryDAO.getAll(page);
+                List<Category> categories = categoryService.getAll(page);
                 resp.getWriter().write(objectMapper.writeValueAsString(categories));
                 return;
             }
@@ -49,7 +49,7 @@ public class CategoryServlet extends HttpServlet {
                             resp.getWriter().write("{\"error\":\"Name parameter required\"}");
                             return;
                         }
-                        List<Category> categories = categoryDAO.searchByName(name);
+                        List<Category> categories = categoryService.searchByName(name);
                         resp.getWriter().write(objectMapper.writeValueAsString(categories));
                         break;
                     }
@@ -58,7 +58,7 @@ public class CategoryServlet extends HttpServlet {
                         String limitParam = req.getParameter("limit");
                         if (limitParam != null) limit = Integer.parseInt(limitParam);
 
-                        List<Category> categories = categoryDAO.getRecentlyUpdated(limit);
+                        List<Category> categories = categoryService.getRecentlyUpdated(limit);
                         resp.getWriter().write(objectMapper.writeValueAsString(categories));
                         break;
                     }
@@ -70,14 +70,14 @@ public class CategoryServlet extends HttpServlet {
                             return;
                         }
                         int min = Integer.parseInt(minParam);
-                        List<Category> categories = categoryDAO.getCategoriesWithMinItems(min);
+                        List<Category> categories = categoryService.getCategoriesWithMinItems(min);
                         resp.getWriter().write(objectMapper.writeValueAsString(categories));
                         break;
                     }
                     default: { // treat as id /api/categories/123
                         try {
                             Long id = Long.parseLong(action);
-                            Category category = categoryDAO.get(id);
+                            Category category = categoryService.get(id);
                             if (category != null) {
                                 resp.getWriter().write(objectMapper.writeValueAsString(category));
                             } else {
@@ -109,15 +109,9 @@ public class CategoryServlet extends HttpServlet {
                 resp.getWriter().write("{\"error\":\"Category name required\"}");
                 return;
             }
-
-            // check duplicate
-            if (categoryDAO.existsByName(category.getName())) {
-                resp.setStatus(HttpServletResponse.SC_CONFLICT);
-                resp.getWriter().write("{\"error\":\"Category already exists\"}");
-                return;
-            }
  
-            boolean created = categoryDAO.create(category);
+ 
+            boolean created = categoryService.create(category);
 
             if (created) {
                 resp.setStatus(HttpServletResponse.SC_CREATED);
@@ -127,7 +121,12 @@ public class CategoryServlet extends HttpServlet {
                 resp.getWriter().write("{\"error\":\"Failed to create category\"}");
             }
 
-        } catch (Exception e) {
+
+        } catch (IllegalStateException e) {
+                resp.setStatus(HttpServletResponse.SC_CONFLICT);
+                resp.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
+            
+         } catch (Exception e) {
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().write("{\"error\":\"Internal server error\"}");
@@ -144,7 +143,7 @@ public class CategoryServlet extends HttpServlet {
                 return;
             }
 
-            Category existing = categoryDAO.get(category.getCategoryId());
+            Category existing = categoryService.get(category.getCategoryId());
             if (existing == null) {
                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 resp.getWriter().write("{\"error\":\"Category not found\"}");
@@ -154,15 +153,14 @@ public class CategoryServlet extends HttpServlet {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write("{\"error\":\"Category name required\"}");
                 return;
-            }
-            if (categoryDAO.existsByNameExcludingId(category.getName(), category.getCategoryId())) {
-                resp.setStatus(HttpServletResponse.SC_CONFLICT);
-                resp.getWriter().write("{\"error\":\"Another category with this name already exists\"}");
-                return;
             } 
-            categoryDAO.update(category);
+            categoryService.update(category);
             resp.getWriter().write(objectMapper.writeValueAsString(category));
 
+        } catch (IllegalStateException e) {
+                resp.setStatus(HttpServletResponse.SC_CONFLICT);
+                resp.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
+            
         } catch (Exception e) {
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -188,10 +186,10 @@ public class CategoryServlet extends HttpServlet {
                 try {
                     // delete by id
                     Long id = Long.parseLong(identifier);
-                    deleted = categoryDAO.delete(id);
+                    deleted = categoryService.deleteById(id);
                 } catch (NumberFormatException e) {
                     // delete by name
-                    deleted = categoryDAO.deleteByName(identifier);
+                    deleted = categoryService.deleteByName(identifier);
                 }
 
                 if (deleted) {
@@ -201,7 +199,10 @@ public class CategoryServlet extends HttpServlet {
                     resp.getWriter().write("{\"error\":\"Category not found or delete failed\"}");
                 }
             }
-        } catch (Exception e) {
+        } catch (IllegalStateException e) {
+                resp.setStatus(HttpServletResponse.SC_CONFLICT);
+                resp.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
+            }  catch (Exception e) {
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().write("{\"error\":\"Internal server error\"}");

@@ -147,6 +147,20 @@ public class CustomerDaoImpl implements  CustomerDao{
 	        return customers;
 	}
  
+    @Override
+    public boolean existsByTeleExcludingId(String telephone, Long excludeId) throws Exception {
+        ResultSet rs = CrudUtil.executeQuery(
+            "SELECT COUNT(*) FROM customers WHERE telephone = ? AND category_id <> ?",
+            telephone, excludeId
+        );
+        if (rs.next()) {
+            return rs.getInt(1) > 0;
+        }
+        return false;
+    }
+
+    
+   
 	private Customer mapResultSetToCustomer(ResultSet rs) throws SQLException {
 		 Customer customer = new Customer();
 	        customer.setId(rs.getLong("id"));

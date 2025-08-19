@@ -35,7 +35,7 @@ public class SaleService {
                 if (!isCreated) {
                     throw new Exception("Failed to create customer");
                 }
-                customer = customerDAO.getCustomerByTelephone(customerInput.getTelephone()); // reload with id
+                customer = customerDAO.getCustomerByTelephone(customerInput.getTelephone());  
             }
             
             
