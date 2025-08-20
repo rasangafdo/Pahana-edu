@@ -1,6 +1,6 @@
-package com.pahanaedu.dao;
+package com.pahanaedu.dao; 
 
-import java.util.List;
+import com.pahanaedu.dto.PaginatedResponse; 
 
 public interface CrudDao<T, ID> extends SuperDao {
     boolean create(T t) throws Exception;
@@ -11,5 +11,5 @@ public interface CrudDao<T, ID> extends SuperDao {
 
     T get(ID id) throws Exception;
 
-    List<T> getAll(int pageNumber) throws Exception;
+    PaginatedResponse<T> getAll(int pageNumber) throws Exception;
 }

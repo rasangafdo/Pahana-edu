@@ -6,6 +6,8 @@ import com.pahanaedu.dao.CrudDao;
 import com.pahanaedu.model.Category; 
 
 public interface CategoryDao extends CrudDao<Category, Long> {
+	
+	List<Category> getAllCategories() throws Exception;
 
 	List<Category> searchByName(String keyword) throws Exception;
 	// Find categories whose name contains a keyword

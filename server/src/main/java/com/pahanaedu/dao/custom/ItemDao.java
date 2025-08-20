@@ -3,14 +3,15 @@ package com.pahanaedu.dao.custom;
 import java.util.List;
 
 import com.pahanaedu.dao.CrudDao;
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Item;
 
 public interface ItemDao extends CrudDao<Item, Long> {
 
-	List<Item> searchByName(String keyword, int pageNumber) throws Exception;
+	PaginatedResponse<Item> searchByName(String keyword, int pageNumber) throws Exception;
 	// Search items by name with pagination
 
-	List<Item> getItemsByCategoryId(Long categoryId, int pageNumber) throws Exception;
+	PaginatedResponse<Item> getItemsByCategoryId(Long categoryId, int pageNumber) throws Exception;
 	// Get all items under a specific category
 
 	List<Item> getLowStockItems(int threshold) throws Exception;

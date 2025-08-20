@@ -5,7 +5,8 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;  
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Customer;
 import com.pahanaedu.service.CustomerService;
 import com.pahanaedu.util.Util;
@@ -37,7 +38,7 @@ public class CustomerServlet extends HttpServlet {
             String pageParam = req.getParameter("page");
             if (pageParam != null) page = Integer.parseInt(pageParam);
             
-            List<Customer> customers = customerService.getAll(page);
+            PaginatedResponse<Customer> customers = customerService.getAll(page);
             resp.getWriter().write(objectMapper.writeValueAsString(customers));
             
             return;

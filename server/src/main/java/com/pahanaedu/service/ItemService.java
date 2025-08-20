@@ -2,6 +2,7 @@ package com.pahanaedu.service;
 
 import com.pahanaedu.dao.DaoFactory;
 import com.pahanaedu.dao.custom.ItemDaoImpl;
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Item;
 
 import java.util.List;
@@ -10,7 +11,7 @@ public class ItemService {
 
     private final ItemDaoImpl itemDAO = (ItemDaoImpl) DaoFactory.getInstance().getDao(DaoFactory.DaoTypes.ITEM);
 
-    public List<Item> getAll(int page) throws Exception{
+    public PaginatedResponse<Item> getAll(int page) throws Exception{
         return itemDAO.getAll(page);
     }
 
@@ -18,11 +19,11 @@ public class ItemService {
         return itemDAO.get(id);
     }
 
-    public List<Item> searchByName(String name, int page) throws Exception{
+    public PaginatedResponse<Item> searchByName(String name, int page) throws Exception{
         return itemDAO.searchByName(name, page);
     }
 
-    public List<Item> getItemsByCategoryId(Long categoryId, int page) throws Exception{
+    public PaginatedResponse<Item> getItemsByCategoryId(Long categoryId, int page) throws Exception{
         return itemDAO.getItemsByCategoryId(categoryId, page);
     }
 

@@ -5,7 +5,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.pahanaedu.dao.CrudUtil; 
+import com.pahanaedu.dao.CrudUtil;
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Item;
 import com.pahanaedu.util.Util;
 
@@ -66,48 +67,81 @@ public class ItemDaoImpl implements ItemDao {
     }
 
     @Override
-    public List<Item> getAll(int pageNumber) throws Exception {
+    public PaginatedResponse<Item> getAll(int pageNumber) throws Exception {
         List<Item> items = new ArrayList<>();
-        int offset = (pageNumber - 1) * 20;
+	    int pageSize = 20;
+	    int offset = (pageNumber - 1) * pageSize;
+	    int totalCount = 0;
+	    int totalPages = 0; 
 
         ResultSet rs = CrudUtil.executeQuery(
-            "SELECT * FROM item ORDER BY last_updated_at DESC LIMIT 20 OFFSET ?",
-            offset
+        		"SELECT *, COUNT(*) OVER() AS total_count " +
+    		            "FROM item " +
+    		            "ORDER BY last_updated_at DESC " +
+    		            "LIMIT ? OFFSET ?" ,
+            pageSize,offset
         );
         while (rs.next()) {
             items.add(mapResultSetToItem(rs));
-        }
-        return items;
+            if (totalCount == 0) {
+                totalCount = rs.getInt("total_count"); // total count is same for all rows
+            }
+        } 
+        
+
+        totalPages = (int) Math.ceil((double) totalCount / pageSize);
+
+        return new PaginatedResponse<Item>(items, totalPages, totalCount);
     }
 
     @Override
-    public List<Item> searchByName(String keyword, int pageNumber) throws Exception {
+    public PaginatedResponse<Item> searchByName(String keyword, int pageNumber) throws Exception {
         List<Item> items = new ArrayList<>();
-        int offset = (pageNumber - 1) * 20;
+	    int pageSize = 20;
+	    int offset = (pageNumber - 1) * pageSize;
+	    int totalCount = 0;
+	    int totalPages = 0; 
 
         ResultSet rs = CrudUtil.executeQuery(
-            "SELECT * FROM item WHERE LOWER(name) LIKE ? ORDER BY last_updated_at DESC LIMIT 20 OFFSET ?",
-            "%" + keyword.toLowerCase() + "%", offset
+            "SELECT * , COUNT(*) OVER() AS total_count FROM item WHERE LOWER(name) LIKE ? ORDER BY last_updated_at DESC LIMIT ? OFFSET ?",
+            "%" + keyword.toLowerCase() + "%",pageSize, offset
         );
         while (rs.next()) {
             items.add(mapResultSetToItem(rs));
-        }
-        return items;
+            if (totalCount == 0) {
+                totalCount = rs.getInt("total_count"); // total count is same for all rows
+            }
+        } 
+        
+
+        totalPages = (int) Math.ceil((double) totalCount / pageSize);
+
+        return new PaginatedResponse<Item>(items, totalPages, totalCount);
     }
 
     @Override
-    public List<Item> getItemsByCategoryId(Long categoryId, int pageNumber) throws Exception {
+    public PaginatedResponse<Item> getItemsByCategoryId(Long categoryId, int pageNumber) throws Exception {
         List<Item> items = new ArrayList<>();
-        int offset = (pageNumber - 1) * 20;
+	    int pageSize = 20;
+	    int offset = (pageNumber - 1) * pageSize;
+	    int totalCount = 0;
+	    int totalPages = 0; 
 
         ResultSet rs = CrudUtil.executeQuery(
-            "SELECT * FROM item WHERE category_id = ? ORDER BY last_updated_at DESC LIMIT 20 OFFSET ?",
-            categoryId, offset
+            "SELECT * , COUNT(*) OVER() AS total_count FROM item WHERE category_id = ? ORDER BY last_updated_at DESC LIMIT ? OFFSET ?",
+            categoryId,pageSize, offset
         );
         while (rs.next()) {
             items.add(mapResultSetToItem(rs));
-        }
-        return items;
+            if (totalCount == 0) {
+                totalCount = rs.getInt("total_count"); // total count is same for all rows
+            }
+        } 
+        
+
+        totalPages = (int) Math.ceil((double) totalCount / pageSize);
+
+        return new PaginatedResponse<Item>(items, totalPages, totalCount);
     }
 
     @Override

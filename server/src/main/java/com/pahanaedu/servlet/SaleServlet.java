@@ -3,6 +3,7 @@ package com.pahanaedu.servlet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pahanaedu.dao.DaoFactory;
 import com.pahanaedu.dao.custom.SaleDaoImpl;
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.dto.SaleRequestDTO;
 import com.pahanaedu.model.Customer;
 import com.pahanaedu.model.Sale;
@@ -34,7 +35,7 @@ public class SaleServlet extends HttpServlet {
                 String pageParam = req.getParameter("page");
                 if (pageParam != null) page = Integer.parseInt(pageParam);
 
-                List<Sale> sales = saleDAO.getAll(page);
+                PaginatedResponse<Sale> sales = saleDAO.getAll(page);
                 resp.getWriter().write(objectMapper.writeValueAsString(sales));
                 return;
             }

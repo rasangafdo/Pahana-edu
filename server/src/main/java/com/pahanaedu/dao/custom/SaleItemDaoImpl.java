@@ -1,6 +1,7 @@
 package com.pahanaedu.dao.custom;
 
 import com.pahanaedu.dao.CrudUtil;
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Item;
 import com.pahanaedu.model.Sale;
 import com.pahanaedu.model.SaleItem; 
@@ -82,7 +83,7 @@ public class SaleItemDaoImpl implements SaleItemDao {
 
 
 	@Override
-	public List<SaleItem> getAll(int pageNumber) throws Exception {
+	public PaginatedResponse<SaleItem> getAll(int pageNumber) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}

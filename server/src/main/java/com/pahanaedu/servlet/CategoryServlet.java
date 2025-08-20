@@ -25,13 +25,9 @@ public class CategoryServlet extends HttpServlet {
             String pathInfo = req.getPathInfo(); // e.g. /123 or /search
             resp.setContentType("application/json");
 
-            if (pathInfo == null || pathInfo.equals("/")) {
-                // list all categories with pagination
-                int page = 1;
-                String pageParam = req.getParameter("page");
-                if (pageParam != null) page = Integer.parseInt(pageParam);
+            if (pathInfo == null || pathInfo.equals("/")) { 
 
-                List<Category> categories = categoryService.getAll(page);
+                List<Category> categories = categoryService.getAll();
                 resp.getWriter().write(objectMapper.writeValueAsString(categories));
                 return;
             }

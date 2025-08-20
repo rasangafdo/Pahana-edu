@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.pahanaedu.dao.CrudUtil;
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Customer; 
 import com.pahanaedu.util.Util;
 
@@ -70,23 +71,37 @@ public class CustomerDaoImpl implements  CustomerDao{
 	}
 
 	@Override
-	public List<Customer> getAll(int pageNumber) {
+	public PaginatedResponse<Customer> getAll(int pageNumber) { 
 	    List<Customer> customers = new ArrayList<>();
-	    int offset = (pageNumber - 1) * 20;
-	 
+	    int pageSize = 20;
+	    int offset = (pageNumber - 1) * pageSize;
+	    int totalCount = 0;
+	    int totalPages = 0; 
+	    
 	    try { 
 
 	           ResultSet rs = CrudUtil.executeQuery(
-	               "SELECT * FROM customers ORDER BY lastUpdated DESC LIMIT 20 OFFSET ?",
-	               offset
+	        		   "SELECT *, COUNT(*) OVER() AS total_count " +
+	        		            "FROM customers " +
+	        		            "ORDER BY lastUpdated DESC " +
+	        		            "LIMIT ? OFFSET ?",
+	        		            pageSize, offset 
 	           );
 	           while (rs.next()) {
 	               customers.add(mapResultSetToCustomer(rs));
+	               if (totalCount == 0) {
+	                   totalCount = rs.getInt("total_count"); // total count is same for all rows
+	               }
 	           } 
+	           
+
+	           totalPages = (int) Math.ceil((double) totalCount / pageSize);
+
 	    } catch (Exception e) {
 	        e.printStackTrace();
 	    }
-	    return customers;
+
+	    return new PaginatedResponse<Customer>(customers, totalPages, totalCount);
 	}
 
 	@Override
@@ -150,7 +165,7 @@ public class CustomerDaoImpl implements  CustomerDao{
     @Override
     public boolean existsByTeleExcludingId(String telephone, Long excludeId) throws Exception {
         ResultSet rs = CrudUtil.executeQuery(
-            "SELECT COUNT(*) FROM customers WHERE telephone = ? AND category_id <> ?",
+            "SELECT COUNT(*) FROM customers WHERE telephone = ? AND id <> ?",
             telephone, excludeId
         );
         if (rs.next()) {

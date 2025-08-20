@@ -1,6 +1,7 @@
 package com.pahanaedu.servlet;
 
-import com.fasterxml.jackson.databind.ObjectMapper; 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Item;
 import com.pahanaedu.service.ItemService;
 import com.pahanaedu.util.Util;
@@ -30,7 +31,7 @@ public class ItemServlet extends HttpServlet {
                 String pageParam = req.getParameter("page");
                 if (pageParam != null) page = Integer.parseInt(pageParam);
 
-                List<Item> items = itemService.getAll(page);
+                PaginatedResponse<Item> items = itemService.getAll(page);
                 resp.getWriter().write(objectMapper.writeValueAsString(items));
                 return;
             }
@@ -52,7 +53,7 @@ public class ItemServlet extends HttpServlet {
                         String pageParam = req.getParameter("page");
                         if (pageParam != null) page = Integer.parseInt(pageParam);
 
-                        List<Item> items = itemService.searchByName(name, page);
+                        PaginatedResponse<Item> items = itemService.searchByName(name, page);
                         resp.getWriter().write(objectMapper.writeValueAsString(items));
                         break;
                     }
@@ -68,7 +69,7 @@ public class ItemServlet extends HttpServlet {
                         String pageParam = req.getParameter("page");
                         if (pageParam != null) page = Integer.parseInt(pageParam);
 
-                        List<Item> items = itemService.getItemsByCategoryId(categoryId, page);
+                        PaginatedResponse<Item> items = itemService.getItemsByCategoryId(categoryId, page);
                         resp.getWriter().write(objectMapper.writeValueAsString(items));
                         break;
                     }

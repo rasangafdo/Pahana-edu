@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.pahanaedu.dao.CrudUtil;
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Category;
 
 public class CategoryDaoImpl implements CategoryDao {
@@ -42,13 +43,11 @@ public class CategoryDaoImpl implements CategoryDao {
     }
 
     @Override
-    public List<Category> getAll(int pageNumber) throws Exception {
-        List<Category> categories = new ArrayList<>();
-        int offset = (pageNumber - 1) * 20;
+    public List<Category> getAllCategories() throws Exception {
+        List<Category> categories = new ArrayList<>(); 
 
         ResultSet rs = CrudUtil.executeQuery(
-            "SELECT * FROM category ORDER BY last_updated_at DESC LIMIT 20 OFFSET ?",
-            offset
+            "SELECT * FROM category ORDER BY last_updated_at DESC"
         );
         while (rs.next()) {
             categories.add(mapResultSetToCategory(rs));
@@ -135,4 +134,10 @@ public class CategoryDaoImpl implements CategoryDao {
         }
         return category;
     }
+
+	@Override
+	public PaginatedResponse<Category> getAll(int pageNumber) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

@@ -1,7 +1,7 @@
 package com.pahanaedu.service;
 
 import com.pahanaedu.dao.DaoFactory;
-import com.pahanaedu.dao.custom.CategoryDaoImpl;
+import com.pahanaedu.dao.custom.CategoryDaoImpl; 
 import com.pahanaedu.model.Category;
 
 import java.util.List;
@@ -14,8 +14,8 @@ public class CategoryService {
     }
 
     // Get all with pagination
-    public List<Category> getAll(int page) throws Exception {
-        return categoryDAO.getAll(page);
+    public List<Category> getAll() throws Exception {
+        return categoryDAO.getAllCategories();
     }
 
     // Get by ID

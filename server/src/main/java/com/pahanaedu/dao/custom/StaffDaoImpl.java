@@ -1,7 +1,8 @@
 package com.pahanaedu.dao.custom;
    
 import java.util.List;
- 
+
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Customer;
 import com.pahanaedu.model.Staff;  
 
@@ -32,7 +33,7 @@ public class StaffDaoImpl implements  StaffDao {
 	}
 
 	@Override
-	public List<Staff> getAll(int pageNumber) throws Exception {
+	public PaginatedResponse<Staff> getAll(int pageNumber) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}

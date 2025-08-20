@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.pahanaedu.dao.CrudUtil;
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Customer; 
 import com.pahanaedu.model.Sale; 
 
@@ -45,17 +46,29 @@ public class SaleDaoImpl implements SaleDao {
     }
 
     @Override
-    public List<Sale> getAll(int pageNumber) throws Exception {
+    public PaginatedResponse<Sale> getAll(int pageNumber) throws Exception {
         List<Sale> sales = new ArrayList<>();
-        int offset = (pageNumber - 1) * 20;
-        ResultSet rs = CrudUtil.executeQuery(
-            "SELECT * FROM sales ORDER BY sale_date DESC, sale_time DESC LIMIT 20 OFFSET ?",
-            offset
+	    int pageSize = 20;
+	    int offset = (pageNumber - 1) * pageSize;
+	    int totalCount = 0;
+	    int totalPages = 0; 
+        ResultSet rs = CrudUtil.executeQuery("SELECT *, COUNT(*) OVER() AS total_count " +
+	            "FROM sales " +
+	            "ORDER BY sale_date DESC, sale_tie DESC " +
+	            "LIMIT ? OFFSET ?",
+            pageSize, offset
         );
         while (rs.next()) {
             sales.add(mapResultSetToSale(rs));
-        }
-        return sales;
+            if (totalCount == 0) {
+                totalCount = rs.getInt("total_count"); // total count is same for all rows
+            }
+        } 
+        
+
+        totalPages = (int) Math.ceil((double) totalCount / pageSize);
+
+        return new PaginatedResponse<Sale>(sales, totalPages, totalCount);
     }
  
     @Override

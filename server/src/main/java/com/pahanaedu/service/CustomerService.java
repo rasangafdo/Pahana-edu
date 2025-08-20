@@ -3,7 +3,8 @@ package com.pahanaedu.service;
 import java.util.List;
 
 import com.pahanaedu.dao.DaoFactory;
-import com.pahanaedu.dao.custom.CustomerDaoImpl; 
+import com.pahanaedu.dao.custom.CustomerDaoImpl;
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Customer;
 
 public class CustomerService {
@@ -14,7 +15,7 @@ public class CustomerService {
 	    }
 
 	     
-	    public List<Customer> getAll(int page) throws Exception {
+	    public PaginatedResponse<Customer> getAll(int page) throws Exception {
 	        return customerDao.getAll(page);
 	    }
  
