@@ -187,13 +187,13 @@ let sales: Sale[] = [
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const formatCurrency = (amount: number): string => {
-  return `LKR ${amount.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `LKR  ${amount.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 // Mock API functions
 export const mockApi = {
   // Customer APIs
-  async getCustomers(page: number = 1, limit: number = 10, search?: string) {
+  async getCustomers(page: number = 1, limit: number = 1, search?: string) {
     await delay(500);
     let filtered = customers;
     

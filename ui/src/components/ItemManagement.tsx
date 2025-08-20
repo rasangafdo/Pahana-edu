@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Plus, Package, Edit2, Eye, Tag, DollarSign, Hash } from 'lucide-react';
-import { mockApi, Item, Category, formatCurrency } from '@/services/mockApi';
+import { mockApi,  formatCurrency } from '@/services/mockApi';
 import { useToast } from '@/hooks/use-toast';
 import {
   Pagination,
@@ -17,6 +17,11 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { createCategory, getCategories } from '@/services/categoryService'; 
+import { Category } from '@/types/Category';
+import { PaginatedResponse } from '@/types/PaginatedResponse';
+import { createItem, getItems, getItemsByCategory, searchItems } from '@/services/itemService';
+import { Item } from '@/types/Item';
 
 const ItemManagement = () => {
   const [items, setItems] = useState<Item[]>([]);
@@ -48,7 +53,16 @@ const ItemManagement = () => {
   const loadItems = async (page: number = 1, search?: string, categoryId?: number) => {
     setLoading(true);
     try {
-      const response = await mockApi.getItems(page, itemsPerPage, search, categoryId);
+        let response: PaginatedResponse<Item>;
+      if (search) {
+        response = await searchItems(search.toLowerCase(),page); // Replace with backend search API if exists
+        response.data = response.data.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
+      } else if (categoryId) {
+        response = await getItemsByCategory(page); // Replace with category API if needed
+        response.data = response.data.filter(i => i.categoryId === categoryId);
+      } else {
+        response = await getItems(page);
+      }
       setItems(response.data);
       setTotalPages(response.totalPages);
       setCurrentPage(page);
@@ -66,7 +80,7 @@ const ItemManagement = () => {
   // Load categories
   const loadCategories = async () => {
     try {
-      const response = await mockApi.getCategories();
+      const response = await getCategories();
       setCategories(response);
     } catch (error) {
       toast({
@@ -114,7 +128,7 @@ const ItemManagement = () => {
     }
 
     try {
-      await mockApi.createItem({
+      await createItem({
         name: newItem.name,
         unitPrice: parseFloat(newItem.unitPrice),
         stockAvailable: parseInt(newItem.stockAvailable),
@@ -199,7 +213,7 @@ const ItemManagement = () => {
     }
 
     try {
-      await mockApi.createCategory(newCategoryName);
+      await createCategory({name:newCategoryName});
       
       toast({
         title: "Success",
@@ -513,7 +527,7 @@ const ItemManagement = () => {
               />
             </div>
             <div>
-              <Label htmlFor="unitPrice">Unit Price (LKR)</Label>
+              <Label htmlFor="unitPrice">Unit Price (LKR )</Label>
               <Input
                 id="unitPrice"
                 type="number"
@@ -601,7 +615,7 @@ const ItemManagement = () => {
               />
             </div>
             <div>
-              <Label htmlFor="editUnitPrice">Unit Price (LKR)</Label>
+              <Label htmlFor="editUnitPrice">Unit Price (LKR )</Label>
               <Input
                 id="editUnitPrice"
                 type="number"

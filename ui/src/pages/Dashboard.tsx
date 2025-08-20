@@ -41,24 +41,17 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     },
     {
       title: "Today's Sales",
-      value: "₹24,680",
+      value: "LKR24,680",
       change: "+15%",
       icon: DollarSign,
       color: "text-warning"
-    },
-    {
-      title: "Monthly Growth",
-      value: "18.5%",
-      change: "+3%",
-      icon: TrendingUp,
-      color: "text-info"
-    }
+    }, 
   ];
 
   const recentSales = [
-    { id: "S001", customer: "Radhika Perera", amount: "₹2,450", time: "2 hours ago" },
-    { id: "S002", customer: "Nuwan Silva", amount: "₹1,890", time: "4 hours ago" },
-    { id: "S003", customer: "Priya Fernando", amount: "₹3,200", time: "6 hours ago" },
+    { id: "S001", customer: "Radhika Perera", amount: "LKR2,450", time: "2 hours ago" },
+    { id: "S002", customer: "Nuwan Silva", amount: "LKR1,890", time: "4 hours ago" },
+    { id: "S003", customer: "Priya Fernando", amount: "LKR3,200", time: "6 hours ago" },
   ];
 
   const renderDashboardContent = () => {
@@ -84,7 +77,7 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {stats.map((stat, index) => (
             <Card key={index} className="hover:shadow-medium transition-shadow duration-300">
               <CardContent className="p-6">

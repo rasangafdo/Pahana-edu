@@ -249,7 +249,7 @@ export const SalesBilling = () => {
                       <SelectItem key={item.itemId} value={item.itemId.toString()}>
                         <div className="flex items-center justify-between w-full">
                           <span>{item.name}</span>
-                          <span className="text-success font-medium ml-2">₹{item.unitPrice}</span>
+                          <span className="text-success font-medium ml-2">LKR {item.unitPrice}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -283,7 +283,7 @@ export const SalesBilling = () => {
                     <div className="flex-1">
                       <p className="font-medium text-sm">{saleItem.item.name}</p>
                       <p className="text-xs text-muted-foreground">{saleItem.item.categoryName}</p>
-                      <p className="text-xs text-success">₹{saleItem.item.unitPrice} each</p>
+                      <p className="text-xs text-success">LKR {saleItem.item.unitPrice} each</p>
                       {saleItem.discountAmount > 0 && (
                         <Badge variant="secondary" className="text-xs mt-1">
                           {saleItem.item.discount}% discount applied
@@ -327,18 +327,18 @@ export const SalesBilling = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal:</span>
-                    <span>₹{subTotal.toFixed(2)}</span>
+                    <span>LKR {subTotal.toFixed(2)}</span>
                   </div>
                   {totalDiscount > 0 && (
                     <div className="flex justify-between text-sm text-success">
                       <span>Total Discount:</span>
-                      <span>-₹{totalDiscount.toFixed(2)}</span>
+                      <span>-LKR {totalDiscount.toFixed(2)}</span>
                     </div>
                   )}
                   <Separator />
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total Amount:</span>
-                    <span className="text-success">₹{totalAmount.toFixed(2)}</span>
+                    <span className="text-success">LKR {totalAmount.toFixed(2)}</span>
                   </div>
                 </div>
 

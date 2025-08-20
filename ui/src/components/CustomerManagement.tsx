@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Search, Plus, Phone, MapPin, Calendar, Edit2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
-import { mockApi, Customer, formatCurrency } from '@/services/mockApi';
 import { useToast } from '@/hooks/use-toast';
 import {
   Pagination,
@@ -16,6 +15,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { createCustomer, getCustomerByTelephone, getCustomers, updateCustomer } from '@/services/customerService';
+import { Customer } from '@/types/Customer';
+import { PaginatedResponse } from '@/types/PaginatedResponse';
 
 const CustomerManagement = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -40,7 +42,15 @@ const CustomerManagement = () => {
   const loadCustomers = async (page: number = 1, search?: string) => {
     setLoading(true);
     try {
-      const response = await mockApi.getCustomers(page, itemsPerPage, search);
+      let response: PaginatedResponse<Customer>;
+      if(search){
+        const customer = await getCustomerByTelephone(search);
+        response  = customer
+          ? { data: [customer], totalPages: 1, totalCount: 1 }
+          : { data: [], totalPages: 1, totalCount: 0 };
+      }else{
+       response  = await getCustomers(page);
+      } 
       setCustomers(response.data);
       setTotalPages(response.totalPages);
       setCurrentPage(page);
@@ -81,7 +91,7 @@ const CustomerManagement = () => {
     }
 
     try {
-      await mockApi.createCustomer({
+      await createCustomer({
         ...newCustomer,
         role: 'CUSTOMER',
         isActive: true
@@ -117,7 +127,7 @@ const CustomerManagement = () => {
     }
 
     try {
-      await mockApi.updateCustomer(selectedCustomer.id, newCustomer);
+      await updateCustomer({...newCustomer, id: selectedCustomer.id});
       
       toast({
         title: "Success",
@@ -150,6 +160,37 @@ const CustomerManagement = () => {
     setSelectedCustomer(customer);
     setIsViewDialogOpen(true);
   };
+
+  const renderPageNumbers = () => {
+  const pageNumbers: (number | string)[] = [];
+  const delta = 2; // how many pages to show around current
+
+  // Always include first page
+  if (currentPage > delta + 2) {
+    pageNumbers.push(1, "…");
+  } else {
+    for (let i = 1; i < currentPage; i++) {
+      pageNumbers.push(i);
+    }
+  }
+
+  // Pages around current
+  for (let i = Math.max(1, currentPage - delta); i <= Math.min(totalPages, currentPage + delta); i++) {
+    pageNumbers.push(i);
+  }
+
+  // Always include last page
+  if (currentPage < totalPages - (delta + 1)) {
+    pageNumbers.push("…", totalPages);
+  } else {
+    for (let i = currentPage + 1; i <= totalPages; i++) {
+      pageNumbers.push(i);
+    }
+  }
+
+  return pageNumbers;
+};
+
 
   return (
     <div className="space-y-6">
@@ -246,37 +287,44 @@ const CustomerManagement = () => {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-8">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => handlePageChange(page)}
-                        isActive={currentPage === page}
-                        className="cursor-pointer"
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-                  <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
+       {totalPages > 1 && (
+  <div className="flex justify-center mt-8">
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+          />
+        </PaginationItem>
+
+        {renderPageNumbers().map((page, idx) => (
+          <PaginationItem key={idx}>
+            {page === "…" ? (
+              <span className="px-3 text-muted-foreground">…</span>
+            ) : (
+              <PaginationLink
+                onClick={() => handlePageChange(page as number)}
+                isActive={currentPage === page}
+                className="cursor-pointer"
+              >
+                {page}
+              </PaginationLink>
+            )}
+          </PaginationItem>
+        ))}
+
+        <PaginationItem>
+          <PaginationNext
+            onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+  </div>
+)}
+
         </>
       )}
 
