@@ -146,7 +146,11 @@ public class CustomerServlet extends HttpServlet {
 	             resp.getWriter().write("{\"error\":\"Missing required field\"}");
 	             return; 
 	    	} 
-		
+	    	if (customer.getTelephone().length() < 9) {
+	    	    resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+	    	    resp.getWriter().write("{\"error\":\"Telephone must be at least 9 characters long\"}");
+	    	    return;
+	    	}
 	    	 
 	        Boolean isCreated = customerService.create(customer);
 	        if(isCreated) {
@@ -188,6 +192,12 @@ public class CustomerServlet extends HttpServlet {
 	            resp.getWriter().write("{\"error\":\"Customer id is required for update\"}");
 	            return;
 	        } 	
+	        
+	        if (!Util.anyNullOrEmpty(customer.getTelephone()) && customer.getTelephone().length() < 9) {
+	            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+	            resp.getWriter().write("{\"error\":\"Telephone must be at least 9 characters long\"}");
+	            return;
+	        }
 	        
 	
 	        customerService.update(customer);

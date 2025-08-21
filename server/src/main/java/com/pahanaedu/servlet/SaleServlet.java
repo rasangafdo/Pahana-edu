@@ -45,22 +45,27 @@ public class SaleServlet extends HttpServlet {
                 String action = splits[1];
 
                 switch (action) {
-                    case "tele": {
-                        String customerTelephone = req.getParameter("customerTele");
-                        if (Util.anyNullOrEmpty(customerTelephone)) {
-                            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                            resp.getWriter().write("{\"error\":\"customer parameter required\"}");
-                            return;
-                        }
-                        int page = 1;
-                        String pageParam = req.getParameter("page");
-                        if (pageParam != null)
-                            page = Integer.parseInt(pageParam);
-                        Customer customer = new Customer("", customerTelephone, "");
-                        PaginatedResponse<Sale> sales = saleService.getSalesByCustomer(customer, page);
-                        resp.getWriter().write(objectMapper.writeValueAsString(sales));
-                        break;
+                case "tele": {
+                    String customerTelephone = req.getParameter("customerTele");
+                    if (Util.anyNullOrEmpty(customerTelephone)) {
+                        resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        resp.getWriter().write("{\"error\":\"customer parameter required\"}");
+                        return;
                     }
+                    int page = 1;
+                    String pageParam = req.getParameter("page");
+                    if (pageParam != null)
+                        page = Integer.parseInt(pageParam);
+                    Customer customer = new Customer("", customerTelephone, "");
+                    PaginatedResponse<Sale> sales = saleService.getSalesByCustomer(customer, page);
+                    resp.getWriter().write(objectMapper.writeValueAsString(sales));
+                    break;
+                }
+                case "latest": { 
+                    List<Sale> sales = saleService.getRecent5Sales();
+                    resp.getWriter().write(objectMapper.writeValueAsString(sales));
+                    break;
+                }
                     case "search": {
                         String query = req.getParameter("q");
                         if (Util.anyNullOrEmpty(query)) {

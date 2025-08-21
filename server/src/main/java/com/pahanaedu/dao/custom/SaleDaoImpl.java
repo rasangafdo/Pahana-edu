@@ -104,13 +104,24 @@ public class SaleDaoImpl implements SaleDao {
         List<Sale> sales = new ArrayList<>();
 
         ResultSet rs = CrudUtil.executeQuery(
-            "SELECT * FROM sales ORDER BY sale_date DESC, sale_time DESC LIMIT ?",
+            " SELECT  s.*, c.name AS customer_name, c.telephone, si.sale_item_id, si.item_id,"+
+                     "si.qty,  si.discount_amount, si.item_total, i.name AS item_name, i.unit_price,"+
+                     "i.category_id FROM sales s JOIN customers c ON s.customer_id = c.id LEFT JOIN sale_items si "+
+                     "ON s.sale_id = si.sale_id LEFT JOIN item i ON si.item_id = i.item_id "+
+                     " ORDER BY sale_date DESC, sale_time DESC LIMIT ?",
             limit
         );
 
+        // 🟢 Map sales + group items
+         Map<Long, Sale> saleMap = new LinkedHashMap<>();
+
+
         while (rs.next()) {
-            sales.add(mapResultSetToSale(rs));
+            mapDetailedResultSetToSale(rs, saleMap);
+ 
         }
+
+        sales.addAll(saleMap.values());
 
         return sales;
     }
