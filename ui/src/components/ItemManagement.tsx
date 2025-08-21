@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Package, Edit2, Eye, Tag, DollarSign, Hash } from 'lucide-react'; 
+import { Search, Plus, Package, Edit2, Eye, Tag, DollarSign, Hash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Pagination,
@@ -16,12 +16,12 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { createCategory, getCategories } from '@/services/categoryService'; 
+import { createCategory, getCategories } from '@/services/categoryService';
 import { Category } from '@/types/Category';
 import { PaginatedResponse } from '@/types/PaginatedResponse';
 import { createItem, getItems, getItemsByCategory, searchItems, updateItem } from '@/services/itemService';
 import { Item } from '@/types/Item';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, renderPageNumbers } from '@/lib/utils';
 
 const ItemManagement = () => {
   const [items, setItems] = useState<Item[]>([]);
@@ -53,9 +53,9 @@ const ItemManagement = () => {
   const loadItems = async (page: number = 1, search?: string, categoryId?: number) => {
     setLoading(true);
     try {
-        let response: PaginatedResponse<Item>;
+      let response: PaginatedResponse<Item>;
       if (search) {
-        response = await searchItems(search.toLowerCase(),page); // Replace with backend search API if exists
+        response = await searchItems(search.toLowerCase(), page); // Replace with backend search API if exists
         response.data = response.data.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
       } else if (categoryId) {
         response = await getItemsByCategory(page); // Replace with category API if needed
@@ -117,7 +117,7 @@ const ItemManagement = () => {
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newItem.name || !newItem.unitPrice || !newItem.stockAvailable || !newItem.categoryId) {
       toast({
         title: "Error",
@@ -136,12 +136,12 @@ const ItemManagement = () => {
         qtyToAllowDiscount: parseInt(newItem.qtyToAllowDiscount) || 1,
         categoryId: parseInt(newItem.categoryId)
       });
-      
+
       toast({
         title: "Success",
         description: "Item added successfully"
       });
-      
+
       setNewItem({
         name: '',
         unitPrice: '',
@@ -163,7 +163,7 @@ const ItemManagement = () => {
 
   const handleEditItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedItem || !newItem.name || !newItem.unitPrice || !newItem.stockAvailable || !newItem.categoryId) {
       toast({
         title: "Error",
@@ -175,7 +175,7 @@ const ItemManagement = () => {
 
     try {
       await updateItem({
-        itemId:selectedItem.itemId, 
+        itemId: selectedItem.itemId,
         name: newItem.name,
         unitPrice: parseFloat(newItem.unitPrice),
         stockAvailable: parseInt(newItem.stockAvailable),
@@ -183,12 +183,12 @@ const ItemManagement = () => {
         qtyToAllowDiscount: parseInt(newItem.qtyToAllowDiscount) || 1,
         categoryId: parseInt(newItem.categoryId)
       });
-      
+
       toast({
         title: "Success",
         description: "Item updated successfully"
       });
-      
+
       setIsEditDialogOpen(false);
       loadItems(currentPage, searchTerm, selectedCategory === 'all' ? undefined : parseInt(selectedCategory));
       setSelectedItem(null);
@@ -203,7 +203,7 @@ const ItemManagement = () => {
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newCategoryName.trim()) {
       toast({
         title: "Error",
@@ -214,13 +214,13 @@ const ItemManagement = () => {
     }
 
     try {
-      await createCategory({name:newCategoryName});
-      
+      await createCategory({ name: newCategoryName });
+
       toast({
         title: "Success",
         description: "Category added successfully"
       });
-      
+
       setNewCategoryName('');
       setIsCategoryDialogOpen(false);
       loadCategories();
@@ -404,7 +404,7 @@ const ItemManagement = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       {item.discount > 0 && (
                         <div className="p-3 bg-gradient-to-r from-accent/20 to-secondary/20 rounded-lg">
                           <p className="text-sm font-medium text-foreground">
@@ -446,30 +446,37 @@ const ItemManagement = () => {
             )}
           </div>
 
+
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center mt-8">
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
-                    <PaginationPrevious 
+                    <PaginationPrevious
                       onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
                       className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                     />
                   </PaginationItem>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => handlePageChange(page)}
-                        isActive={currentPage === page}
-                        className="cursor-pointer"
-                      >
-                        {page}
-                      </PaginationLink>
+
+                  {renderPageNumbers(totalPages, currentPage).map((page, idx) => (
+                    <PaginationItem key={idx}>
+                      {page === "…" ? (
+                        <span className="px-3 text-muted-foreground">…</span>
+                      ) : (
+                        <PaginationLink
+                          onClick={() => handlePageChange(page as number)}
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}h
+                        </PaginationLink>
+                      )}
                     </PaginationItem>
                   ))}
+
                   <PaginationItem>
-                    <PaginationNext 
+                    <PaginationNext
                       onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
                       className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                     />
@@ -478,6 +485,7 @@ const ItemManagement = () => {
               </Pagination>
             </div>
           )}
+
         </>
       )}
 
@@ -616,30 +624,30 @@ const ItemManagement = () => {
               />
             </div>
             <div className="text-center" ><span className="text-bold">Stock Available : </span><span className="text-xs text-gray-600">{selectedItem && selectedItem.stockAvailable}</span></div>
-              
+
             <div className="flex flex-row gap-4 items-center justify-center">
-            <div>
-              <Label htmlFor="editUnitPrice">Unit Price (LKR ) : <span className="text-xs text-gray-600">{selectedItem && "LKR."+ selectedItem.unitPrice}</span></Label>
-              <Input
-                id="editUnitPrice"
-                type="number"
-                step="0.01"
-                value={newItem.unitPrice}
-                onChange={(e) => setNewItem({ ...newItem, unitPrice: e.target.value })}
-                placeholder="0.00"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="editStock">Increase stock by?</Label>
-              <Input
-                id="editStock"
-                type="number" 
-                onChange={(e) => setNewItem({ ...newItem, stockAvailable: e.target.value })}
-                placeholder="0"
-                required
-              />
-            </div>
+              <div>
+                <Label htmlFor="editUnitPrice">Unit Price (LKR ) : <span className="text-xs text-gray-600">{selectedItem && "LKR." + selectedItem.unitPrice}</span></Label>
+                <Input
+                  id="editUnitPrice"
+                  type="number"
+                  step="0.01"
+                  value={newItem.unitPrice}
+                  onChange={(e) => setNewItem({ ...newItem, unitPrice: e.target.value })}
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="editStock">Increase stock by?</Label>
+                <Input
+                  id="editStock"
+                  type="number"
+                  onChange={(e) => setNewItem({ ...newItem, stockAvailable: e.target.value })}
+                  placeholder="0"
+                  required
+                />
+              </div>
             </div>
             <div>
               <Label htmlFor="editCategory">
@@ -660,42 +668,43 @@ const ItemManagement = () => {
               </Select>
             </div>
             <div className="flex flex-row gap-4 items-center justify-center">
-            <div>
-              <Label htmlFor="editDiscount">Discount (%)  : <span className="text-xs text-gray-600">{selectedItem && selectedItem.discount + "%"}</span></Label>
-              <Input
-                id="editDiscount"
-                type="number"
-                step="0.01"
-                min={0.0}
-                value={newItem.discount}
-                onChange={(e) => {
-                       toast({}).dismiss()
-                       const newobj:any = {discount: Number(e.target.value)}
-                       if(Number(e.target.value)<=0){
-                        newobj.qtyToAllowDiscount= 1
-                       }
-                       setNewItem({ ...newItem, ...newobj })
-                      
-                      }
-                }
-                placeholder="0.00"
-              />
-            </div>
-            <div>
-              <Label htmlFor="editQtyDiscount">Quantity for Discount : <span className="text-xs text-gray-600">{selectedItem && selectedItem.qtyToAllowDiscount}</span></Label>
-              <Input
-                id="editQtyDiscount"
-                type="number"
-                value={newItem.qtyToAllowDiscount}
-                onChange={(e) => {
-                  parseFloat(newItem.discount) > 0 ? setNewItem({ ...newItem, qtyToAllowDiscount: e.target.value }) : toast({
-        title: "Error",
-        description: "Discount must be greater than 0 to set quantity for discount",
-        variant: "destructive"
-      });}}
-                placeholder="1"
-              />
-            </div>
+              <div>
+                <Label htmlFor="editDiscount">Discount (%)  : <span className="text-xs text-gray-600">{selectedItem && selectedItem.discount + "%"}</span></Label>
+                <Input
+                  id="editDiscount"
+                  type="number"
+                  step="0.01"
+                  min={0.0}
+                  value={newItem.discount}
+                  onChange={(e) => {
+                    toast({}).dismiss()
+                    const newobj: any = { discount: Number(e.target.value) }
+                    if (Number(e.target.value) <= 0) {
+                      newobj.qtyToAllowDiscount = 1
+                    }
+                    setNewItem({ ...newItem, ...newobj })
+
+                  }
+                  }
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="editQtyDiscount">Quantity for Discount : <span className="text-xs text-gray-600">{selectedItem && selectedItem.qtyToAllowDiscount}</span></Label>
+                <Input
+                  id="editQtyDiscount"
+                  type="number"
+                  value={newItem.qtyToAllowDiscount}
+                  onChange={(e) => {
+                    parseFloat(newItem.discount) > 0 ? setNewItem({ ...newItem, qtyToAllowDiscount: e.target.value }) : toast({
+                      title: "Error",
+                      description: "Discount must be greater than 0 to set quantity for discount",
+                      variant: "destructive"
+                    });
+                  }}
+                  placeholder="1"
+                />
+              </div>
             </div>
             <div className="flex gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">
@@ -753,7 +762,7 @@ const ItemManagement = () => {
                 <Button type="button" variant="outline" onClick={() => setIsViewDialogOpen(false)} className="flex-1">
                   Close
                 </Button>
-                <Button 
+                <Button
                   onClick={() => {
                     setIsViewDialogOpen(false);
                     openEditDialog(selectedItem);

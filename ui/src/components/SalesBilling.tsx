@@ -40,7 +40,7 @@ import { handlePrint } from "@/lib/utils";
 
 
 export const SalesBilling = () => {
-  const [items,setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
 
   const [customer, setCustomer] = useState<Customer>({
     name: "",
@@ -74,27 +74,27 @@ export const SalesBilling = () => {
       setSaleItems([...saleItems, newSaleItem]);
     }
     setSelectedItemId("");
-  setItems([])
+    setItems([])
     setSearch("")
   };
 
   const updateItemQuantity = (itemId: number, newQty: number) => {
-    if (newQty <= 0) { 
+    if (newQty <= 0) {
       newQty = 1
     }
     const item = saleItems.find((i) => i.item.itemId === itemId).item;
-    if(!item) return;
-    if(newQty>item.stockAvailable){
-toast({
+    if (!item) return;
+    if (newQty > item.stockAvailable) {
+      toast({
         title: "Error",
         description: `Only ${item.stockAvailable} units available in stock.`,
         variant: "destructive",
       })
       return;
-    }else{
+    } else {
       toast({}).dismiss()
     }
- 
+
     setSaleItems(
       saleItems.map((saleItem) => {
         if (saleItem.item.itemId === itemId) {
@@ -122,15 +122,15 @@ toast({
     );
   };
 
-  const handleItemSearch = async(searchTerm: string) => {
-   try{
-     if (!searchTerm) {
-      setItems([]); // Reset items if search is empty
-      return;
-    }
-    // Simulate API call to search items
-    const filteredItems = await searchItems(searchTerm);
-    setItems(filteredItems.data);
+  const handleItemSearch = async (searchTerm: string) => {
+    try {
+      if (!searchTerm) {
+        setItems([]); // Reset items if search is empty
+        return;
+      }
+      // Simulate API call to search items
+      const filteredItems = await searchItems(searchTerm);
+      setItems(filteredItems.data);
     } catch (error) {
       console.error("Error searching items:", error);
       toast({
@@ -177,8 +177,8 @@ toast({
       return;
     }
 
-    try{
-       const sale = await createSale({customer, saleItems,paid, balance});
+    try {
+      const sale = await createSale({ customer, saleItems, paid, balance });
       if (!sale) {
         toast({
           title: "Error",
@@ -187,7 +187,7 @@ toast({
         });
         return;
       }
-  handlePrint(
+      handlePrint(
         sale.customerId,
         saleItems,
         subTotal,
@@ -198,37 +198,37 @@ toast({
         toast
       );
 
-        toast({
-      title: "Success",
-      description: "Sale created successfully",
-      variant: "default",
-    });
+      toast({
+        title: "Success",
+        description: "Sale created successfully",
+        variant: "default",
+      });
       setCustomer({ name: "", telephone: "", address: "" });
       setSaleItems([]);
       setPaidAmount("");
       setSearch("")
-    }catch (error) {
+    } catch (error) {
       console.error("Error creating sale:", error);
       toast({
         title: "Error",
         description: "Failed to create sale",
-                variant: "destructive",
+        variant: "destructive",
       });
       return;
     }
-  
+
   };
 
   const handleCustomerFetch = async (phone: string) => {
 
-    if(!phone) {
+    if (!phone) {
       setCustomer({ name: "", telephone: "", address: "" });
       return;
     }
     if (phone.trim().length < 9) {
       setCustomer({ name: "", telephone: phone, address: "" });
       return;
-    } 
+    }
     try {
       const fetchedCustomer = await getCustomerByTelephone(phone);
       if (fetchedCustomer) {
@@ -238,7 +238,7 @@ toast({
       } else {
         setIsLockCustomer(false);
 
-      setCustomer({ name: "", telephone: phone, address: "" });
+        setCustomer({ name: "", telephone: phone, address: "" });
         toast({
           title: "Customer Not Found",
           description: "This will create a new customer",
@@ -247,7 +247,7 @@ toast({
       }
     } catch (error) {
       console.error("Error fetching customer:", error);
-        setIsLockCustomer(false);
+      setIsLockCustomer(false);
 
       toast({
         title: "Error",
@@ -296,7 +296,7 @@ toast({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              
+
               <div className="space-y-2">
                 <Label htmlFor="customerPhone">Telephone *</Label>
                 <Input
@@ -308,18 +308,19 @@ toast({
                   }
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="customerName">Customer Name *</Label>
                 <Input
                   id="customerName"
                   placeholder="Enter customer name"
                   value={customer.name}
-                  onChange={(e) =>{ if(!isLockCustomer) {
-                    setCustomer({ ...customer, name: e.target.value })
+                  onChange={(e) => {
+                    if (!isLockCustomer) {
+                      setCustomer({ ...customer, name: e.target.value })
+                    }
                   }
                   }
-                }
                 />
               </div>
               <div className="space-y-2">
@@ -328,9 +329,11 @@ toast({
                   id="customerAddress"
                   placeholder="Enter full address"
                   value={customer.address}
-                  onChange={(e) =>{ if(!isLockCustomer) {
-                    setCustomer({ ...customer, address: e.target.value })
-                  }}}
+                  onChange={(e) => {
+                    if (!isLockCustomer) {
+                      setCustomer({ ...customer, address: e.target.value })
+                    }
+                  }}
                 />
               </div>
             </CardContent>
@@ -377,7 +380,7 @@ toast({
                           <span>{item.name}</span>
                           <span className="text-success font-medium ml-2">
                             LKR {item.unitPrice}
-                          </span> 
+                          </span>
                           <span className="text-xs ml-6">stock : {item.stockAvailable}</span>
                         </div>
                       </SelectItem>
@@ -417,7 +420,7 @@ toast({
                     <div className="flex-1">
                       <p className="font-medium text-sm">
                         {saleItem.item.name}
-                      </p> 
+                      </p>
                       <p className="text-xs text-success">
                         LKR {saleItem.item.unitPrice.toFixed(2)} each
                       </p>
@@ -439,7 +442,7 @@ toast({
                         }
                       >
                         <Minus className="h-3 w-3" />
-                      </Button> 
+                      </Button>
                       <span className="w-8 text-center font-medium">
                         {saleItem.qty}
                       </span>
@@ -455,14 +458,14 @@ toast({
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
-                        <Input
+                      <Input
                         id="qty"
                         type="number"
                         placeholder="1"
-                        min={1} 
+                        min={1}
                         onChange={(e) =>
-                          updateItemQuantity(saleItem.item.itemId, Number(e.target.value)) 
-                        } 
+                          updateItemQuantity(saleItem.item.itemId, Number(e.target.value))
+                        }
                         className="max-w-12 text-center font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <Button
@@ -534,8 +537,8 @@ toast({
                         balance > 0
                           ? "text-warning"
                           : balance < 0
-                          ? "text-success"
-                          : "text-muted-foreground"
+                            ? "text-success"
+                            : "text-muted-foreground"
                       }
                     >
                       LKR {balance.toFixed(2)}

@@ -175,3 +175,33 @@ export const handlePrint = async (
     document.body.removeChild(printFrame);
   }, 1000);
 };
+export const renderPageNumbers = (totalPages: number, currentPage: number) => {
+  const pages: (number | string)[] = [];
+  const  delta = 1
+  // Helper to add a range of numbers
+  const range = (start: number, end: number) => {
+    const arr: number[] = [];
+    for (let i = start; i <= end; i++) arr.push(i);
+    return arr;
+  };
+
+  const left = Math.max(currentPage - delta, 1);
+  const right = Math.min(currentPage + delta, totalPages);
+
+  // Always include first page
+  if (left > 1) {
+    pages.push(1);
+    if (left > 2) pages.push("…");
+  }
+
+  // Pages around current
+  pages.push(...range(left, right));
+
+  // Always include last page
+  if (right < totalPages) {
+    if (right < totalPages - 1) pages.push("…");
+    pages.push(totalPages);
+  }
+
+  return pages;
+};

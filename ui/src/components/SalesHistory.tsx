@@ -30,7 +30,7 @@ import {
 import { getSaleByIdorTele, getSales, updateSalePayment } from '@/services/saleService';
 import { PaginatedResponse } from '@/types/PaginatedResponse';
 import { Sale } from '@/types/Sale';
-import { formatCurrency, handlePrint } from '@/lib/utils';
+import { formatCurrency, handlePrint, renderPageNumbers } from '@/lib/utils';
 import { Label } from './ui/label';
 
 const SalesHistory = () => {
@@ -45,7 +45,7 @@ const SalesHistory = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
- 
+
 
   // Load sales with pagination
   const loadSales = async (page: number = 1, search?: string) => {
@@ -84,29 +84,29 @@ const SalesHistory = () => {
     loadSales(page, searchTerm);
   };
 
-  const handleUpdatePayment  =  async ()=>{
-      try {
-      const response = await updateSalePayment(selectedSale.saleId,editPaidAmount,editBalance)
-        loadSales()
-        setSelectedSale(null)
-        setIsUpdatePaymentDialogOpen(false);
-        toast({
-          title: "Success",
-          description: "Payment updated successfully",
-          variant: "default"
-        });
-      }catch(error){
-        toast({
+  const handleUpdatePayment = async () => {
+    try {
+      const response = await updateSalePayment(selectedSale.saleId, editPaidAmount, editBalance)
+      loadSales()
+      setSelectedSale(null)
+      setIsUpdatePaymentDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Payment updated successfully",
+        variant: "default"
+      });
+    } catch (error) {
+      toast({
         title: "Error",
         description: "Failed to update payment",
         variant: "destructive"
       });
-    } 
+    }
   }
 
-  const handlePaidAmountChange = (paidvalue:number)=>{
-     setEditPaidAmount(paidvalue)
-      setEditBalance(selectedSale.totalAmount - paidvalue)
+  const handlePaidAmountChange = (paidvalue: number) => {
+    setEditPaidAmount(paidvalue)
+    setEditBalance(selectedSale.totalAmount - paidvalue)
   }
 
   const openViewDialog = (sale: Sale) => {
@@ -118,6 +118,7 @@ const SalesHistory = () => {
     setEditBalance(sale.balance)
     setEditPaidAmount(sale.paid)
     setIsUpdatePaymentDialogOpen(true);
+    loadSales(currentPage)
   };
 
   const getPaymentStatus = (sale: Sale) => {
@@ -188,7 +189,7 @@ const SalesHistory = () => {
                         <div className="flex items-center gap-2">
                           {sale.paid < sale.totalAmount && <Button
                             size="sm"
-                            variant="outline" 
+                            variant="outline"
                             onClick={() => openUpdatePaymentDialog(sale)}
                           >
                             <Eye className="h-4 w-4 mr-2" />
@@ -226,6 +227,7 @@ const SalesHistory = () => {
             )}
           </div>
 
+
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center mt-8">
@@ -237,17 +239,23 @@ const SalesHistory = () => {
                       className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                     />
                   </PaginationItem>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => handlePageChange(page)}
-                        isActive={currentPage === page}
-                        className="cursor-pointer"
-                      >
-                        {page}
-                      </PaginationLink>
+
+                  {renderPageNumbers(totalPages, currentPage).map((page, idx) => (
+                    <PaginationItem key={idx}>
+                      {page === "…" ? (
+                        <span className="px-3 text-muted-foreground">…</span>
+                      ) : (
+                        <PaginationLink
+                          onClick={() => handlePageChange(page as number)}
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}h
+                        </PaginationLink>
+                      )}
                     </PaginationItem>
                   ))}
+
                   <PaginationItem>
                     <PaginationNext
                       onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
@@ -258,6 +266,7 @@ const SalesHistory = () => {
               </Pagination>
             </div>
           )}
+
         </>
       )}
       {/* update payment Dialog */}
@@ -267,11 +276,14 @@ const SalesHistory = () => {
             <DialogTitle>Sale Details</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 p-4 bg-accent/20 rounded-lg">
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-success" />
-              <Label htmlFor="paidAmount" className="font-medium">
-                Payment Details
-              </Label>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-success" />
+                <Label htmlFor="paidAmount" className="font-medium">
+                  Payment Details
+                </Label>
+              </div>
+              {selectedSale && <span>Total : LKR {selectedSale.totalAmount}</span>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="paidAmount">Paid Amount (LKR)</Label>
@@ -281,21 +293,21 @@ const SalesHistory = () => {
                 step="0.01"
                 placeholder="0.00"
                 value={editPaidAmount}
-                onChange={(e) =>{ handlePaidAmountChange(Number(e.target.value))}}
+                onChange={(e) => { handlePaidAmountChange(Number(e.target.value)) }}
                 className="text-right"
               />
               <div>
-                    <p className="text-sm font-medium text-muted-foreground">Balance</p>
-                    <p className="text-base font-semibold text-destructive">{formatCurrency(editBalance)}</p>
-                  </div>
+                <p className="text-sm font-medium text-muted-foreground">Balance</p>
+                <p className="text-base font-semibold text-destructive">{formatCurrency(editBalance)}</p>
+              </div>
               <div className="flex justify-end gap-2">
-              <Button  variant="outline"
-              onClick={() => setIsUpdatePaymentDialogOpen(false)}
-              className="mb-4 "
-            > 
-                Close
-            </Button> 
-                <Button onClick={()=> handleUpdatePayment()}>
+                <Button variant="outline"
+                  onClick={() => setIsUpdatePaymentDialogOpen(false)}
+                  className="mb-4 "
+                >
+                  Close
+                </Button>
+                <Button onClick={() => handleUpdatePayment()}>
                   Update
                 </Button>
               </div>
@@ -390,16 +402,16 @@ const SalesHistory = () => {
 
               <div className="flex justify-end">
                 <Button variant="outline"
-                onClick={() => handlePrint(
-                  selectedSale.customerId,
-                  selectedSale.saleItems,
-                  selectedSale.subTotal,
-                  selectedSale.totalDiscount,
-                  selectedSale.totalAmount,
-                  selectedSale.paid,
-                  selectedSale.balance,
-                  toast
-                )}
+                  onClick={() => handlePrint(
+                    selectedSale.customerId,
+                    selectedSale.saleItems,
+                    selectedSale.subTotal,
+                    selectedSale.totalDiscount,
+                    selectedSale.totalAmount,
+                    selectedSale.paid,
+                    selectedSale.balance,
+                    toast
+                  )}
                   className="mb-4 mr-4"
                 >
                   <Printer className="h-4 w-4 mr-2" />

@@ -41,6 +41,11 @@ export const searchSalesByCustomer = async (customerTele: string, page: number =
   return response.data;
 };
 
+export const getRecentSales = async (): Promise<Sale[]> => {
+  const response = await api.get<Sale[]>('/api/sales/latest');
+  return response.data;
+};
+
 //   Create a new sale
 export const createSale = async (saleRequest: SaleRequestDTO): Promise<Sale> => {
   const response = await api.post<Sale>('/api/sales', saleRequest);

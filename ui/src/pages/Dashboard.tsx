@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,10 +22,15 @@ import { View } from "@/types/View";
 import { SalesHistory } from "@/components/SalesHistory";
 import { StaffManagement } from "@/components/StaffManagement";
 import { CategoryManagement } from "@/components/CategoryManagement";
+import { Sale } from "@/types/Sale";
+import { useToast } from "@/hooks/use-toast";
+import { getRecentSales } from "@/services/saleService";
 
 
 const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [recentSales, setRecentSales] = useState<Sale[]>([])
+  const {toast} = useToast();
 
   const stats = [
     {
@@ -51,12 +56,25 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     }, 
   ];
 
-  const recentSales = [
-    { id: "S001", customer: "Radhika Perera", amount: "LKR2,450", time: "2 hours ago" },
-    { id: "S002", customer: "Nuwan Silva", amount: "LKR1,890", time: "4 hours ago" },
-    { id: "S003", customer: "Priya Fernando", amount: "LKR3,200", time: "6 hours ago" },
-  ];
+  const loadRecentsale = async () => {
+    try {
+      const sales = await getRecentSales();
+      setRecentSales(sales);
+    } catch (error) {
+      console.error("Failed to load recent sales", error);
+      toast({
+        title: "Error",
+        description: "Failed to load recent sales",
+        variant: "destructive"
+      });
+    }
+  };
 
+
+    useEffect(() => {
+    loadRecentsale();
+    }, []);
+  
   const renderDashboardContent = () => {
     return (
       <div className="space-y-6">
@@ -146,14 +164,14 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
             <CardContent>
               <div className="space-y-4">
                 {recentSales.map((sale) => (
-                  <div key={sale.id} className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-accent/10 to-secondary/10">
+                  <div key={sale.saleId} className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-accent/10 to-secondary/10">
                     <div>
-                      <p className="font-medium text-foreground">{sale.customer}</p>
-                      <p className="text-sm text-muted-foreground">Sale #{sale.id}</p>
+                      <p className="font-medium text-foreground">{sale.customerName}</p>
+                      <p className="text-sm text-muted-foreground">Sale #{sale.saleId}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-success">{sale.amount}</p>
-                      <p className="text-xs text-muted-foreground">{sale.time}</p>
+                      <p className="font-bold text-success">LKR {sale.totalAmount}</p>
+                      <p className="text-xs text-muted-foreground">{sale.saleTime}</p>
                     </div>
                   </div>
                 ))}
