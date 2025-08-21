@@ -1,9 +1,10 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 const api: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:8080/pahana-edu', // replace with your API URL
+  baseURL: 'http://192.168.8.194:8080/pahana-edu',  
   headers: {
     'Content-Type': 'application/json',
+
   },
 });
 
@@ -12,7 +13,7 @@ import type { InternalAxiosRequestConfig } from 'axios';
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('jwtToken');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }

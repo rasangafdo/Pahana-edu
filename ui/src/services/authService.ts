@@ -10,64 +10,40 @@ import { Staff } from "@/types/Staff";
 export const apiLogin = async (
     loginDto: LoginDto
 ): Promise<LoginResponse> => {
-    const response = await api.post<LoginResponse>("/api/login", loginDto);
-    if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("role", response.data.role ?? "");
-        localStorage.setItem("username", response.data.username ?? "");
-    }
+    const response = await api.post<LoginResponse>("/api/login", loginDto); 
     return response.data;
 };
 
 
 // Create staff (Register new staff)
-export const createStaff = async (staff: Staff, token: string): Promise<Staff> => {
-    const response = await api.post<Staff>("/api/staff", staff, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
+export const createStaff = async (staff: Staff): Promise<Staff> => {
+    const response = await api.post<Staff>("/api/staff", staff);
     return response.data;
 };
 
 //Fetch user
-export const getUser = async (token: string): Promise<Staff> => {
-    const response = await api.get<Staff>(`/api/staff/user`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        },
-    });
+export const getUser = async (): Promise<Staff> => {
+    const response = await api.get<Staff>(`/api/staff/user` );
     return response.data;
 };
 
  
 
-export const getAllStaff = async (token: string): Promise<Staff[]> => {
-    const response = await api.get<Staff[]>('/api/staff', {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        },
-    });
+export const getAllStaff = async ( ): Promise<Staff[]> => {
+    const response = await api.get<Staff[]>('/api/staff' );
     return response.data;
 }
 
-export const getUserByUsername = async (username: string, token: string): Promise<Staff> => {
-    const response = await api.get<Staff>(`/api/staff?username=${username}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        },
-    });
+export const getUserByUsername = async (username: string ): Promise<Staff> => {
+    const response = await api.get<Staff>(`/api/staff?username=${username}` );
     return response.data;
 }
 
-export const deleteStaff = async (id: number, token: string): Promise<void> => {
-    await api.delete(`/api/staff/${id}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        },
-    });
+export const deleteStaff = async (id: number ): Promise<void> => {
+    await api.delete(`/api/staff/${id}`);
+}
+
+export const updateStaff = async (id:number, staff: Staff ): Promise<Staff> => {
+    const response = await api.put<Staff>(`/api/staff/${id}` );
+    return response.data;
 }

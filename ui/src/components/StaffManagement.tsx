@@ -27,9 +27,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { createStaff, deleteStaff, getAllStaff, getUserByUsername } from '@/services/authService';
-import { Staff } from '@/types/Staff';
-import { useAuth } from '@/context/AuthContext';
+import { createStaff, deleteStaff, getAllStaff, getUserByUsername, updateStaff } from '@/services/authService';
+import { Staff } from '@/types/Staff'; 
 
 const StaffManagement = () => {
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -51,8 +50,7 @@ const StaffManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-  const { jwtToken} = useAuth();
+  const { toast } = useToast(); 
 
   const itemsPerPage = 6;
 
@@ -61,10 +59,10 @@ const StaffManagement = () => {
     setLoading(true);
     try { 
       if(search){
-        const response  = await getUserByUsername(search, jwtToken);
+        const response  = await getUserByUsername(search );
         setStaff(response ? [response] : []);
       }else{
-       const response = await getAllStaff(jwtToken);
+       const response = await getAllStaff();
       setStaff(response);
       }
     } catch (error) {
@@ -101,7 +99,7 @@ const StaffManagement = () => {
 
     try {
       
-      await createStaff(newStaff, jwtToken);
+      await createStaff(newStaff );
       
       toast({
         title: "Success",
@@ -158,7 +156,7 @@ const StaffManagement = () => {
     if (!selectedStaff) return;
 
     try {
-      await deleteStaff(selectedStaff.id,jwtToken);
+      await deleteStaff(selectedStaff.id );
       
       toast({
         title: "Success",
@@ -177,6 +175,44 @@ const StaffManagement = () => {
       });
     }
   };
+
+    const handleEditStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedStaff || !newStaff.name || !newStaff.telephone || !newStaff.address || !newStaff.username || !newStaff.email || !newStaff.role) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const updateData = { ...newStaff };
+      if (!updateData.password) {
+        delete updateData.password; // Don't update password if empty
+      }
+      
+      await  updateStaff(selectedStaff.id, updateData);
+      
+      toast({
+        title: "Success",
+        description: "Staff member updated successfully"
+      });
+      
+      setIsEditDialogOpen(false);
+      setSelectedStaff(null);
+      loadStaff(searchTerm);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update staff member",
+        variant: "destructive"
+      });
+    }
+  };
+
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role.toUpperCase()) {
@@ -402,6 +438,97 @@ const StaffManagement = () => {
         </DialogContent>
       </Dialog>
  
+  <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Staff Member</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditStaff} className="space-y-4">
+            <div>
+              <Label htmlFor="editStaffName">Full Name</Label>
+              <Input
+                id="editStaffName"
+                value={newStaff.name}
+                onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
+                placeholder="Enter full name"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="editStaffTelephone">Telephone</Label>
+              <Input
+                id="editStaffTelephone"
+                value={newStaff.telephone}
+                onChange={(e) => setNewStaff({ ...newStaff, telephone: e.target.value })}
+                placeholder="Enter telephone number"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="editStaffAddress">Address</Label>
+              <Input
+                id="editStaffAddress"
+                value={newStaff.address}
+                onChange={(e) => setNewStaff({ ...newStaff, address: e.target.value })}
+                placeholder="Enter address"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="editStaffUsername">Username</Label>
+              <Input
+                id="editStaffUsername"
+                value={newStaff.username}
+                onChange={(e) => setNewStaff({ ...newStaff, username: e.target.value })}
+                placeholder="Enter username"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="editStaffEmail">Email</Label>
+              <Input
+                id="editStaffEmail"
+                type="email"
+                value={newStaff.email}
+                onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
+                placeholder="Enter email address"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="editStaffPassword">Password (leave empty to keep current)</Label>
+              <Input
+                id="editStaffPassword"
+                type="password"
+                value={newStaff.password}
+                onChange={(e) => setNewStaff({ ...newStaff, password: e.target.value })}
+                placeholder="Enter new password"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editStaffRole">Role</Label>
+              <Select value={newStaff.role} onValueChange={(value) => setNewStaff({ ...newStaff, role: value == "MANAGER" ? "MANAGER" :  "CASHIER"  })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MANAGER">Manager</SelectItem>
+                  <SelectItem value="CASHIER">Cashier</SelectItem>
+                  <SelectItem value="ASSISTANT">Assistant</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1">
+                Update Staff
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* View Staff Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>

@@ -27,7 +27,7 @@ export function AuthProvider({ children }: AuthProviderPropsType) {
 
     async function getUserInfo(token: string) {
         try { 
-            const staffUser = await getUser(token);
+            const staffUser = await getUser();
             const roleName = staffUser.role
             setIsManager(roleName && roleName.toUpperCase() === "MANAGER")
             setIsCashier(roleName && roleName.toUpperCase() === "CASHIER")
