@@ -12,14 +12,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper; 
-import com.pahanaedu.model.Staff;
+import com.pahanaedu.model.Staff; 
 import com.pahanaedu.service.StaffService;
+import com.pahanaedu.util.AuthUtil;
 import com.pahanaedu.util.JwtValidator;
 import com.pahanaedu.util.Util;
 
 /**
  * Servlet implementation class LoginServlet
  */
+ 
 @WebServlet("/api/staff/*")
 public class StaffServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -30,27 +32,12 @@ public class StaffServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
-        try {
+        try { 
+
+    		Staff loggedInStaff = AuthUtil.authenticate(req, resp);
+    		if (loggedInStaff == null) return; 
             // Get JWT token
-            String authHeader = req.getHeader("Authorization");
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                resp.getWriter().write("{\"error\":\"Missing or invalid Authorization header\"}");
-                return;
-            }
-
-            String token = authHeader.substring(7);
-            String loggedInUsername = JwtValidator.getUsername(token);
-
-            if (loggedInUsername == null) {
-                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                resp.getWriter().write("{\"error\":\"Invalid or expired token\"}");
-                return;
-            }
-
-            // Fetch logged-in staff to check role
-            Staff loggedInStaff = staffService.getStaffUser(loggedInUsername);
-
+        
             String pathInfo = req.getPathInfo(); // /user or null
             if ("/user".equals(pathInfo)) {
                 // Return logged-in user info
@@ -58,11 +45,8 @@ public class StaffServlet extends HttpServlet {
                 resp.getWriter().write(objectMapper.writeValueAsString(loggedInStaff));
             } else if (pathInfo == null || "/".equals(pathInfo)) {
                 // Only manager can access
-                if (loggedInStaff.getRole() != null && !loggedInStaff.getRole().name().equals("MANAGER")) {
-                    resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    resp.getWriter().write("{\"error\":\"Access denied. Manager role required\"}");
-                    return;
-                }
+            	if (!AuthUtil.authorizeRole(loggedInStaff, "MANAGER", resp)) return;
+
 
                 // Optional query param for username search
                 String searchUsername = req.getParameter("username");
@@ -98,29 +82,12 @@ public class StaffServlet extends HttpServlet {
         resp.setContentType("application/json");
 
         try {
-        	 String authHeader = req.getHeader("Authorization");
-             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                 resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                 resp.getWriter().write("{\"error\":\"Missing or invalid Authorization header\"}");
-                 return;
-             }
-            String token = authHeader.substring(7);
-            String loggedInUsername = JwtValidator.getUsername(token);
 
-            if (loggedInUsername == null) {
-                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                resp.getWriter().write("{\"error\":\"Invalid or expired token\"}");
-                return;
-            }
 
-            // Fetch logged-in staff to check role
-            Staff loggedInStaff = staffService.getStaffUser(loggedInUsername);
-            
-            if (loggedInStaff.getRole() != null && !loggedInStaff.getRole().name().equals("MANAGER")) {
-                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                resp.getWriter().write("{\"error\":\"Access denied. Manager role required\"}");
-                return;
-            }
+    		Staff loggedInStaff = AuthUtil.authenticate(req, resp);
+    		if (loggedInStaff == null) return; 
+    		if (!AuthUtil.authorizeRole(loggedInStaff, "MANAGER", resp)) return;
+
 
             
             Staff staff = Util.parseJsonBody(req, Staff.class);
@@ -144,6 +111,12 @@ public class StaffServlet extends HttpServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
+
+
+    		Staff staff = AuthUtil.authenticate(req, resp);
+    		if (staff == null) return; 
+    		if (!AuthUtil.authorizeRole(staff, "MANAGER", resp)) return;
+
             String pathInfo = req.getPathInfo();
             if (pathInfo == null || pathInfo.equals("/")) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);

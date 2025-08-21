@@ -7,6 +7,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.pahanaedu.model.Staff;
+import com.pahanaedu.util.AuthUtil;
+
 @WebServlet("/api")
 public class ApiStatus extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -23,8 +26,17 @@ public class ApiStatus extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.setContentType("text/plain");
+		try{
+			response.setContentType("text/plain");
+		
+		Staff staff = AuthUtil.authenticate(request, response);
+		if (staff == null) return; 
+
         response.getWriter().write("Api Working!");
+		}catch(Exception e) { 
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			response.getWriter().write("{\"error\":\"Internal server error\"}");
+		}
 	}
 
 	/**

@@ -2,7 +2,9 @@ package com.pahanaedu.servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper; 
 import com.pahanaedu.model.Category;
+import com.pahanaedu.model.Staff;
 import com.pahanaedu.service.CategoryService;
+import com.pahanaedu.util.AuthUtil;
 import com.pahanaedu.util.Util;
 
 import javax.servlet.ServletException;
@@ -22,6 +24,10 @@ public class CategoryServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
+
+    		Staff staff = AuthUtil.authenticate(req, resp);
+    		if (staff == null) return; 
+    		
             String pathInfo = req.getPathInfo(); // e.g. /123 or /search
             resp.setContentType("application/json");
 
@@ -99,6 +105,11 @@ public class CategoryServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
+
+
+    		Staff staff = AuthUtil.authenticate(req, resp);
+    		if (staff == null) return; 
+    		
             Category category = Util.parseJsonBody(req, Category.class); 
             if (category == null || Util.anyNullOrEmpty(category.getName())) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -132,6 +143,11 @@ public class CategoryServlet extends HttpServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
+
+
+    		Staff staff = AuthUtil.authenticate(req, resp);
+    		if (staff == null) return; 
+    		
             Category category = Util.parseJsonBody(req, Category.class);
             if (category == null || category.getCategoryId() == null) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -167,6 +183,12 @@ public class CategoryServlet extends HttpServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
+
+    		Staff staff = AuthUtil.authenticate(req, resp);
+    		if (staff == null) return; 
+    		if (!AuthUtil.authorizeRole(staff, "MANAGER", resp)) return;
+
+    		
             String pathInfo = req.getPathInfo();
             if (pathInfo == null || pathInfo.equals("/")) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);

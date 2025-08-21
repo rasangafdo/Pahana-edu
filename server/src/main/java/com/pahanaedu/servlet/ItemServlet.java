@@ -3,7 +3,9 @@ package com.pahanaedu.servlet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Item;
+import com.pahanaedu.model.Staff;
 import com.pahanaedu.service.ItemService;
+import com.pahanaedu.util.AuthUtil;
 import com.pahanaedu.util.Util;
 
 import javax.servlet.ServletException;
@@ -22,6 +24,9 @@ public class ItemServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
+
+    		Staff staff = AuthUtil.authenticate(req, resp);
+    		if (staff == null) return; 
             String pathInfo = req.getPathInfo(); // e.g. /123 or /search
             resp.setContentType("application/json");
 
@@ -117,6 +122,9 @@ public class ItemServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
+
+    		Staff staff = AuthUtil.authenticate(req, resp);
+    		if (staff == null) return; 
             Item item = Util.parseJsonBody(req, Item.class); 
             
             if (item == null) {
@@ -163,6 +171,9 @@ public class ItemServlet extends HttpServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try { 
+
+    		Staff staff = AuthUtil.authenticate(req, resp);
+    		if (staff == null) return; 
         	resp.setContentType("application/json");
 
 

@@ -8,7 +8,9 @@ import javax.servlet.http.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Customer;
+import com.pahanaedu.model.Staff;
 import com.pahanaedu.service.CustomerService;
+import com.pahanaedu.util.AuthUtil;
 import com.pahanaedu.util.Util;
 
 import java.io.IOException;
@@ -27,7 +29,10 @@ public class CustomerServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         try {
-        	 
+
+
+    		Staff staff = AuthUtil.authenticate(req, resp);
+    		if (staff == null) return; 
         String pathInfo = req.getPathInfo(); // e.g., /123 or /search or /telephone
         resp.setContentType("application/json");
 
@@ -134,6 +139,9 @@ public class CustomerServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     	try {
 
+    		Staff staff = AuthUtil.authenticate(req, resp);
+    		if (staff == null) return; 
+
             Customer customer = Util.parseJsonBody(req, Customer.class);
 	    	if(customer == null) {
 	    		 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST); 
@@ -178,6 +186,9 @@ public class CustomerServlet extends HttpServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try{
+
+    		Staff staff = AuthUtil.authenticate(req, resp);
+    		if (staff == null) return; 
         	
 	        // Update existing customer - expects full Customer JSON with valid ID
 	        Customer customer = Util.parseJsonBody(req, Customer.class);
