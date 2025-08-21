@@ -3,8 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Eye, Calendar, DollarSign } from 'lucide-react';
-import { mockApi, Sale, formatCurrency } from '@/services/mockApi';
+import { Search, Eye, Calendar, DollarSign, Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Pagination,
@@ -28,24 +27,36 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { getSaleByIdorTele, getSales, updateSalePayment } from '@/services/saleService';
+import { PaginatedResponse } from '@/types/PaginatedResponse';
+import { Sale } from '@/types/Sale';
+import { formatCurrency, handlePrint } from '@/lib/utils';
+import { Label } from './ui/label';
 
 const SalesHistory = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isUpdatePaymentDialogOpen, setIsUpdatePaymentDialogOpen] = useState(false);
+  const [editPaidAmount, setEditPaidAmount] = useState(0);
+  const [editBalance, setEditBalance] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-
-  const itemsPerPage = 8;
+ 
 
   // Load sales with pagination
   const loadSales = async (page: number = 1, search?: string) => {
     setLoading(true);
     try {
-      const response = await mockApi.getSales(page, itemsPerPage, search);
+      let response: PaginatedResponse<Sale>;
+      if (search) {
+        response = await getSaleByIdorTele(search, page);
+      } else {
+        response = await getSales(page);
+      }
       setSales(response.data);
       setTotalPages(response.totalPages);
       setCurrentPage(page);
@@ -73,15 +84,46 @@ const SalesHistory = () => {
     loadSales(page, searchTerm);
   };
 
+  const handleUpdatePayment  =  async ()=>{
+      try {
+      const response = await updateSalePayment(selectedSale.saleId,editPaidAmount,editBalance)
+        loadSales()
+        setSelectedSale(null)
+        setIsUpdatePaymentDialogOpen(false);
+        toast({
+          title: "Success",
+          description: "Payment updated successfully",
+          variant: "default"
+        });
+      }catch(error){
+        toast({
+        title: "Error",
+        description: "Failed to update payment",
+        variant: "destructive"
+      });
+    } 
+  }
+
+  const handlePaidAmountChange = (paidvalue:number)=>{
+     setEditPaidAmount(paidvalue)
+      setEditBalance(selectedSale.totalAmount - paidvalue)
+  }
+
   const openViewDialog = (sale: Sale) => {
     setSelectedSale(sale);
     setIsViewDialogOpen(true);
   };
+  const openUpdatePaymentDialog = (sale: Sale) => {
+    setSelectedSale(sale);
+    setEditBalance(sale.balance)
+    setEditPaidAmount(sale.paid)
+    setIsUpdatePaymentDialogOpen(true);
+  };
 
   const getPaymentStatus = (sale: Sale) => {
-    if (sale.balance === 0) {
+    if (sale.paid >= sale.totalAmount) {
       return { status: "Paid", variant: "default" as const };
-    } else if (sale.paid > 0) {
+    } else if (sale.paid > 0 && sale.paid < sale.totalAmount) {
       return { status: "Partial", variant: "secondary" as const };
     } else {
       return { status: "Pending", variant: "destructive" as const };
@@ -126,7 +168,7 @@ const SalesHistory = () => {
                   <Card key={sale.saleId} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-6 mr-2">
                           <div>
                             <h3 className="font-semibold text-lg">Sale #{sale.saleId.toString().padStart(4, '0')}</h3>
                             <p className="text-sm text-muted-foreground">{sale.customerName}</p>
@@ -144,6 +186,15 @@ const SalesHistory = () => {
                           </Badge>
                         </div>
                         <div className="flex items-center gap-2">
+                          {sale.paid < sale.totalAmount && <Button
+                            size="sm"
+                            variant="outline" 
+                            onClick={() => openUpdatePaymentDialog(sale)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Update Payment
+                          </Button>
+                          }
                           <Button
                             size="sm"
                             variant="outline"
@@ -154,7 +205,7 @@ const SalesHistory = () => {
                           </Button>
                         </div>
                       </div>
-                      
+
                       {sale.saleItems.length > 0 && (
                         <div className="mt-4 pt-4 border-t">
                           <p className="text-sm text-muted-foreground">
@@ -181,7 +232,7 @@ const SalesHistory = () => {
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
-                    <PaginationPrevious 
+                    <PaginationPrevious
                       onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
                       className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                     />
@@ -198,7 +249,7 @@ const SalesHistory = () => {
                     </PaginationItem>
                   ))}
                   <PaginationItem>
-                    <PaginationNext 
+                    <PaginationNext
                       onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
                       className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                     />
@@ -209,6 +260,49 @@ const SalesHistory = () => {
           )}
         </>
       )}
+      {/* update payment Dialog */}
+      <Dialog open={isUpdatePaymentDialogOpen} onOpenChange={setIsUpdatePaymentDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Sale Details</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 p-4 bg-accent/20 rounded-lg">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-success" />
+              <Label htmlFor="paidAmount" className="font-medium">
+                Payment Details
+              </Label>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="paidAmount">Paid Amount (LKR)</Label>
+              <Input
+                id="paidAmount"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={editPaidAmount}
+                onChange={(e) =>{ handlePaidAmountChange(Number(e.target.value))}}
+                className="text-right"
+              />
+              <div>
+                    <p className="text-sm font-medium text-muted-foreground">Balance</p>
+                    <p className="text-base font-semibold text-destructive">{formatCurrency(editBalance)}</p>
+                  </div>
+              <div className="flex justify-end gap-2">
+              <Button  variant="outline"
+              onClick={() => setIsUpdatePaymentDialogOpen(false)}
+              className="mb-4 "
+            > 
+                Close
+            </Button> 
+                <Button onClick={()=> handleUpdatePayment()}>
+                  Update
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* View Sale Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
@@ -247,7 +341,7 @@ const SalesHistory = () => {
                       <TableHead>Item</TableHead>
                       <TableHead>Unit Price</TableHead>
                       <TableHead>Quantity</TableHead>
-                      <TableHead>Discount</TableHead>
+                      <TableHead>Discount for 1</TableHead>
                       <TableHead className="text-right">Total</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -293,7 +387,24 @@ const SalesHistory = () => {
                 </div>
               </div>
 
+
               <div className="flex justify-end">
+                <Button variant="outline"
+                onClick={() => handlePrint(
+                  selectedSale.customerId,
+                  selectedSale.saleItems,
+                  selectedSale.subTotal,
+                  selectedSale.totalDiscount,
+                  selectedSale.totalAmount,
+                  selectedSale.paid,
+                  selectedSale.balance,
+                  toast
+                )}
+                  className="mb-4 mr-4"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print Bill
+                </Button>
                 <Button onClick={() => setIsViewDialogOpen(false)}>
                   Close
                 </Button>

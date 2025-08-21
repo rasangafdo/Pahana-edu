@@ -6,8 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Package, Edit2, Eye, Tag, DollarSign, Hash } from 'lucide-react';
-import { mockApi,  formatCurrency } from '@/services/mockApi';
+import { Search, Plus, Package, Edit2, Eye, Tag, DollarSign, Hash } from 'lucide-react'; 
 import { useToast } from '@/hooks/use-toast';
 import {
   Pagination,
@@ -20,8 +19,9 @@ import {
 import { createCategory, getCategories } from '@/services/categoryService'; 
 import { Category } from '@/types/Category';
 import { PaginatedResponse } from '@/types/PaginatedResponse';
-import { createItem, getItems, getItemsByCategory, searchItems } from '@/services/itemService';
+import { createItem, getItems, getItemsByCategory, searchItems, updateItem } from '@/services/itemService';
 import { Item } from '@/types/Item';
+import { formatCurrency } from '@/lib/utils';
 
 const ItemManagement = () => {
   const [items, setItems] = useState<Item[]>([]);
@@ -174,7 +174,8 @@ const ItemManagement = () => {
     }
 
     try {
-      await mockApi.updateItem(selectedItem.itemId, {
+      await updateItem({
+        itemId:selectedItem.itemId, 
         name: newItem.name,
         unitPrice: parseFloat(newItem.unitPrice),
         stockAvailable: parseInt(newItem.stockAvailable),
@@ -189,8 +190,8 @@ const ItemManagement = () => {
       });
       
       setIsEditDialogOpen(false);
-      setSelectedItem(null);
       loadItems(currentPage, searchTerm, selectedCategory === 'all' ? undefined : parseInt(selectedCategory));
+      setSelectedItem(null);
     } catch (error) {
       toast({
         title: "Error",
@@ -605,7 +606,7 @@ const ItemManagement = () => {
           </DialogHeader>
           <form onSubmit={handleEditItem} className="space-y-4">
             <div>
-              <Label htmlFor="editItemName">Item Name</Label>
+              <Label htmlFor="editItemName">Item Name : <span className="text-xs text-gray-600">{selectedItem && selectedItem.name}</span></Label>
               <Input
                 id="editItemName"
                 value={newItem.name}
@@ -614,8 +615,11 @@ const ItemManagement = () => {
                 required
               />
             </div>
+            <div className="text-center" ><span className="text-bold">Stock Available : </span><span className="text-xs text-gray-600">{selectedItem && selectedItem.stockAvailable}</span></div>
+              
+            <div className="flex flex-row gap-4 items-center justify-center">
             <div>
-              <Label htmlFor="editUnitPrice">Unit Price (LKR )</Label>
+              <Label htmlFor="editUnitPrice">Unit Price (LKR ) : <span className="text-xs text-gray-600">{selectedItem && "LKR."+ selectedItem.unitPrice}</span></Label>
               <Input
                 id="editUnitPrice"
                 type="number"
@@ -627,18 +631,21 @@ const ItemManagement = () => {
               />
             </div>
             <div>
-              <Label htmlFor="editStock">Stock Available</Label>
+              <Label htmlFor="editStock">Increase stock by?</Label>
               <Input
                 id="editStock"
-                type="number"
-                value={newItem.stockAvailable}
+                type="number" 
                 onChange={(e) => setNewItem({ ...newItem, stockAvailable: e.target.value })}
                 placeholder="0"
                 required
               />
             </div>
+            </div>
             <div>
-              <Label htmlFor="editCategory">Category</Label>
+              <Label htmlFor="editCategory">
+                Category : <span className="text-xs text-gray-600">{selectedItem && categories.find(i => i.categoryId === selectedItem.categoryId)?.name || ""}
+                </span>
+              </Label>
               <Select value={newItem.categoryId} onValueChange={(value) => setNewItem({ ...newItem, categoryId: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
@@ -652,26 +659,43 @@ const ItemManagement = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex flex-row gap-4 items-center justify-center">
             <div>
-              <Label htmlFor="editDiscount">Discount (%)</Label>
+              <Label htmlFor="editDiscount">Discount (%)  : <span className="text-xs text-gray-600">{selectedItem && selectedItem.discount + "%"}</span></Label>
               <Input
                 id="editDiscount"
                 type="number"
                 step="0.01"
+                min={0.0}
                 value={newItem.discount}
-                onChange={(e) => setNewItem({ ...newItem, discount: e.target.value })}
+                onChange={(e) => {
+                       toast({}).dismiss()
+                       const newobj:any = {discount: Number(e.target.value)}
+                       if(Number(e.target.value)<=0){
+                        newobj.qtyToAllowDiscount= 1
+                       }
+                       setNewItem({ ...newItem, ...newobj })
+                      
+                      }
+                }
                 placeholder="0.00"
               />
             </div>
             <div>
-              <Label htmlFor="editQtyDiscount">Quantity for Discount</Label>
+              <Label htmlFor="editQtyDiscount">Quantity for Discount : <span className="text-xs text-gray-600">{selectedItem && selectedItem.qtyToAllowDiscount}</span></Label>
               <Input
                 id="editQtyDiscount"
                 type="number"
                 value={newItem.qtyToAllowDiscount}
-                onChange={(e) => setNewItem({ ...newItem, qtyToAllowDiscount: e.target.value })}
+                onChange={(e) => {
+                  parseFloat(newItem.discount) > 0 ? setNewItem({ ...newItem, qtyToAllowDiscount: e.target.value }) : toast({
+        title: "Error",
+        description: "Discount must be greater than 0 to set quantity for discount",
+        variant: "destructive"
+      });}}
                 placeholder="1"
               />
+            </div>
             </div>
             <div className="flex gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">

@@ -48,8 +48,8 @@ export const createItem = async (item: Item): Promise<Item> => {
 };
 
 // Update general item info by ID
-export const updateItem = async (id: number, item: Item): Promise<Item> => {
-  const response = await api.put<Item>(`/api/items/${id}`, item);
+export const updateItem = async (item: Item): Promise<Item> => {
+  const response = await api.put<Item>(`/api/items`, item);
   return response.data;
 };
 

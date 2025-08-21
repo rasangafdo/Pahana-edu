@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { View } from "@/types/View";
 import { 
   LayoutDashboard, 
   Users, 
@@ -7,11 +8,12 @@ import {
   ShoppingCart, 
   HelpCircle, 
   LogOut,
-  Book
+  Book,
+  UserCheck,
+  History,
+  Tag
 } from "lucide-react";
-
-type View = 'dashboard' | 'customers' | 'items' | 'sales' | 'help';
-
+ 
 interface SidebarProps {
   currentView: View;
   onViewChange: (view: View) => void;
@@ -30,14 +32,28 @@ const navigationItems = [
     icon: Users,
   },
   {
+    id: 'categories' as View,
+    label: 'Categories',
+    icon: Tag,
+  },
+  {
     id: 'items' as View,
     label: 'Items',
     icon: Package,
   },
   {
-    id: 'sales' as View,
-    label: 'Sales & Billing',
+    id: 'billing' as View,
+    label: 'Billing',
     icon: ShoppingCart,
+  },{
+    id: 'sales-history' as View,
+    label: 'Sales History',
+    icon: History,
+  },
+  {
+    id: 'staff' as View,
+    label: 'Staff',
+    icon: UserCheck,
   },
   {
     id: 'help' as View,
@@ -48,7 +64,7 @@ const navigationItems = [
 
 export const Sidebar = ({ currentView, onViewChange, onLogout }: SidebarProps) => {
   return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-card border-r border-border shadow-medium">
+    <div className="fixed left-0 top-0 h-full w-64   bg-card border-r border-border shadow-medium">
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="p-6 border-b border-border">
@@ -64,7 +80,7 @@ export const Sidebar = ({ currentView, onViewChange, onLogout }: SidebarProps) =
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 h-full overflow-y-auto">
           {navigationItems.map((item) => (
             <Button
               key={item.id}

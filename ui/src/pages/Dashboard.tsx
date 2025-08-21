@@ -18,8 +18,11 @@ import { Sidebar } from "@/components/Sidebar";
 import { CustomerManagement } from "@/components/CustomerManagement";
 import { ItemManagement } from "@/components/ItemManagement";
 import { SalesBilling } from "@/components/SalesBilling";
+import { View } from "@/types/View";
+import { SalesHistory } from "@/components/SalesHistory";
+import { StaffManagement } from "@/components/StaffManagement";
+import { CategoryManagement } from "@/components/CategoryManagement";
 
-type View = 'dashboard' | 'customers' | 'items' | 'sales' | 'help';
 
 const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -40,8 +43,8 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
       color: "text-success"
     },
     {
-      title: "Today's Sales",
-      value: "LKR24,680",
+      title: "Today's Sales (LKR)",
+      value: "24,680",
       change: "+15%",
       icon: DollarSign,
       color: "text-warning"
@@ -77,13 +80,13 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {stats.map((stat, index) => (
             <Card key={index} className="hover:shadow-medium transition-shadow duration-300">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                    <p className="text-sm font-medium text-muted-foreground text-nowrap">{stat.title}</p>
                     <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
                     <Badge variant="secondary" className="mt-2 text-xs">
                       {stat.change} from last month
@@ -116,7 +119,7 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
                 Add New Customer
               </Button>
               <Button 
-                onClick={() => setCurrentView('sales')} 
+                onClick={() => setCurrentView('billing')} 
                 variant="outline" 
                 className="w-full justify-start h-12"
               >
@@ -166,10 +169,16 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     switch (currentView) {
       case 'customers':
         return <CustomerManagement />;
+      case 'categories':
+        return <CategoryManagement />;
       case 'items':
         return <ItemManagement />;
-      case 'sales':
+      case 'billing':
         return <SalesBilling />;
+      case 'sales-history':
+        return <SalesHistory />;
+      case 'staff':
+        return <StaffManagement />;
       case 'help':
         return (
           <div className="space-y-6">
@@ -197,7 +206,7 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
           onViewChange={setCurrentView}
           onLogout={onLogout}
         />
-        <main className="flex-1 p-6 ml-64">
+        <main className="flex-1 p-6 ml-64  ">
           {renderContent()}
         </main>
       </div>

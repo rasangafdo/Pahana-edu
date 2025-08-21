@@ -9,7 +9,7 @@ import Dashboard from "./pages/Dashboard";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   const handleLogin = () => {
     setIsAuthenticated(true);
