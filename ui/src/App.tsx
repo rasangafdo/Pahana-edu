@@ -1,34 +1,36 @@
-import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
 
+const AppContent = () => {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <>
+      <Toaster />
+      <Sonner />
+      {isAuthenticated ? (
+        <Dashboard />
+      ) : (
+        <Login />
+      )}
+    </>
+  );
+};
+
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        {isAuthenticated ? (
-          <Dashboard onLogout={handleLogout} />
-        ) : (
-          <Login onLogin={handleLogin} />
-        )}
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

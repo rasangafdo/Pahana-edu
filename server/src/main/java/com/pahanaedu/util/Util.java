@@ -47,6 +47,7 @@ public class Util {
         try {
 			return objectMapper.readValue(body, clazz);
 		} catch (Exception e) {
+			e.printStackTrace();
 			return null;
 		}
     }

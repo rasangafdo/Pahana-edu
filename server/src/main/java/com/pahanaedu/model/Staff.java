@@ -10,8 +10,9 @@ public class Staff extends User {
     private String email;
  
     private StaffRole role; // MANAGER or CASHIER only
-
-    // Constructor including User fields and Staff fields
+ 
+    public Staff() {};
+    
     public Staff(String name, String telephone, String address, 
                  String username, String password, String email, StaffRole role) {
     	this.name = name;

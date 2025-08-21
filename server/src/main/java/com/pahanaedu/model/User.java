@@ -1,7 +1,6 @@
 package com.pahanaedu.model;
  
-import java.time.LocalDateTime;
-import java.util.List;
+import java.time.LocalDateTime; 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
  
@@ -23,9 +22,7 @@ public abstract class User {
     protected LocalDateTime lastUpdated;
     
     
-
-//    @OneToMany(mappedBy = "user")
-    protected List<Sale> orders;
+ 
      
     
     // Getters and Setters
@@ -78,12 +75,5 @@ public abstract class User {
     public LocalDateTime getLastUpdated() {
         return lastUpdated;
     }
-    
-    public void setOrders(List<Sale> orders) {
-    	this.orders =  orders;
-    }
-    
-    public List<Sale> getOrders(){
-    	return orders;
-    }
+     
 }

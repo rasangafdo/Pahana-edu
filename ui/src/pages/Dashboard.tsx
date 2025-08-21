@@ -25,12 +25,16 @@ import { CategoryManagement } from "@/components/CategoryManagement";
 import { Sale } from "@/types/Sale";
 import { useToast } from "@/hooks/use-toast";
 import { getRecentSales } from "@/services/saleService";
+import { useAuth } from "@/context/AuthContext";
+import { Help } from "@/components/Help";
+import { Permission } from "@/components/Permission";
 
 
-const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
+const Dashboard = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [recentSales, setRecentSales] = useState<Sale[]>([])
   const {toast} = useToast();
+  const { isManager } = useAuth();
 
   const stats = [
     {
@@ -196,21 +200,9 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
       case 'sales-history':
         return <SalesHistory />;
       case 'staff':
-        return <StaffManagement />;
+        return  isManager ? <StaffManagement />: <Permission />;
       case 'help':
-        return (
-          <div className="space-y-6">
-            <h1 className="text-3xl font-bold">Help & Documentation</h1>
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-muted-foreground">
-                  Welcome to Pahana Edu Management System. Use the sidebar to navigate between different sections.
-                  For support, contact the system administrator.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+       return <Help />;
       default:
         return renderDashboardContent();
     }
@@ -221,8 +213,7 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
       <div className="flex">
         <Sidebar 
           currentView={currentView} 
-          onViewChange={setCurrentView}
-          onLogout={onLogout}
+          onViewChange={setCurrentView} 
         />
         <main className="flex-1 p-6 ml-64  ">
           {renderContent()}

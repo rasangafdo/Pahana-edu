@@ -5,34 +5,46 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Book, Lock, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiLogin } from "@/services/authService";
+import { useAuth } from "@/context/AuthContext";
 
-const Login = ({ onLogin }: { onLogin: () => void }) => {
+const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const {login} = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    try{
+      // Simulate an API call for login
+      if (!username || !password) {
+        throw new Error("Username and password are required");
+      }
 
-    // Simulate authentication
-    setTimeout(() => {
-      if (username && password) {
+      const response =  await apiLogin({ username, password });
+      if (response.token) {
         toast({
           title: "Login Successful",
           description: "Welcome to Pahana Edu Management System",
         });
-        onLogin();
+        // Redirect or perform further actions after successful login
+        login(response.token);
       } else {
-        toast({
-          title: "Login Failed",
-          description: "Please enter valid credentials",
-          variant: "destructive",
-        });
+        throw new Error("Invalid credentials");
       }
+    }catch (error) {
+      toast({
+        title: "Login Failed",
+        description: error.response.data.message || "An error occurred during login",
+        variant: "destructive",
+      });
       setIsLoading(false);
-    }, 1000);
+      return;
+    }
+ 
   };
 
   return (
@@ -63,7 +75,9 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
                     id="username"
                     placeholder="Enter your username"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => {setUsername(e.target.value)
+                      toast({}).dismiss()
+                    }}
                     className="pl-10"
                     required
                   />
@@ -78,7 +92,9 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
                     type="password"
                     placeholder="Enter your password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) =>{ setPassword(e.target.value)
+                                            toast({}).dismiss()}
+                    }
                     className="pl-10"
                     required
                   />

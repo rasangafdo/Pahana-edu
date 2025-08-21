@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { View } from "@/types/View";
 import { 
@@ -16,10 +17,14 @@ import {
  
 interface SidebarProps {
   currentView: View;
-  onViewChange: (view: View) => void;
-  onLogout: () => void;
+  onViewChange: (view: View) => void; 
 }
 
+
+export const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
+  const {isManager,logout} = useAuth();
+
+  
 const navigationItems = [
   {
     id: 'dashboard' as View,
@@ -50,11 +55,16 @@ const navigationItems = [
     label: 'Sales History',
     icon: History,
   },
-  {
-    id: 'staff' as View,
-    label: 'Staff',
-    icon: UserCheck,
-  },
+// Add "Staff" only if user is a manager
+  ...(isManager
+    ? [
+        {
+          id: 'staff' as View,
+          label: 'Staff',
+          icon: UserCheck,
+        },
+      ]
+    : []),
   {
     id: 'help' as View,
     label: 'Help',
@@ -62,7 +72,6 @@ const navigationItems = [
   },
 ];
 
-export const Sidebar = ({ currentView, onViewChange, onLogout }: SidebarProps) => {
   return (
     <div className="fixed left-0 top-0 h-full w-64   bg-card border-r border-border shadow-medium">
       <div className="flex flex-col h-full">
@@ -104,7 +113,7 @@ export const Sidebar = ({ currentView, onViewChange, onLogout }: SidebarProps) =
           <Button
             variant="outline"
             className="w-full justify-start h-12 text-destructive hover:text-destructive hover:bg-destructive/5"
-            onClick={onLogout}
+            onClick={logout}
           >
             <LogOut className="h-5 w-5 mr-3" />
             Sign Out

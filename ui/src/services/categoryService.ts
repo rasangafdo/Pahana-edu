@@ -1,4 +1,4 @@
-// src/api/categoryApi.ts
+ 
 import api from './api';
 import { Category } from '../types/Category';
 

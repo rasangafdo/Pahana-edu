@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Plus, Phone, MapPin, Calendar, Edit2, Eye, Trash2, User, Mail } from 'lucide-react';
-import { mockApi, Staff } from '@/services/mockApi';
+ 
 import { useToast } from '@/hooks/use-toast';
 import {
   Pagination,
@@ -27,6 +27,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { createStaff, deleteStaff, getAllStaff, getUserByUsername } from '@/services/authService';
+import { Staff } from '@/types/Staff';
+import { useAuth } from '@/context/AuthContext';
 
 const StaffManagement = () => {
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -36,30 +39,34 @@ const StaffManagement = () => {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
-  const [newStaff, setNewStaff] = useState({
+  const [newStaff, setNewStaff] = useState<Staff>({
     name: '',
     telephone: '',
     address: '',
     username: '',
     email: '',
     password: '',
-    role: ''
+    role: 'CASHIER', // Default role
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { jwtToken} = useAuth();
 
   const itemsPerPage = 6;
 
   // Load staff with pagination
-  const loadStaff = async (page: number = 1, search?: string) => {
+  const loadStaff = async (  search?: string) => {
     setLoading(true);
-    try {
-      const response = await mockApi.getStaff(page, itemsPerPage, search);
-      setStaff(response.data);
-      setTotalPages(response.totalPages);
-      setCurrentPage(page);
+    try { 
+      if(search){
+        const response  = await getUserByUsername(search, jwtToken);
+        setStaff(response ? [response] : []);
+      }else{
+       const response = await getAllStaff(jwtToken);
+      setStaff(response);
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -72,18 +79,14 @@ const StaffManagement = () => {
   };
 
   useEffect(() => {
-    loadStaff(1, searchTerm);
+    loadStaff(searchTerm);
   }, [searchTerm]);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
   };
-
-  const handlePageChange = (page: number) => {
-    loadStaff(page, searchTerm);
-  };
-
+ 
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -97,14 +100,13 @@ const StaffManagement = () => {
     }
 
     try {
-      await mockApi.createStaff({
-        ...newStaff,
-        isActive: true
-      });
+      
+      await createStaff(newStaff, jwtToken);
       
       toast({
         title: "Success",
-        description: "Staff member added successfully"
+        description: "Staff member added successfully",
+        variant: "default"
       });
       
       setNewStaff({
@@ -114,10 +116,10 @@ const StaffManagement = () => {
         username: '',
         email: '',
         password: '',
-        role: ''
+        role: 'CASHIER', // Reset to default role
       });
       setIsDialogOpen(false);
-      loadStaff(currentPage, searchTerm);
+      loadStaff(searchTerm);
     } catch (error) {
       toast({
         title: "Error",
@@ -126,66 +128,7 @@ const StaffManagement = () => {
       });
     }
   };
-
-  const handleEditStaff = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedStaff || !newStaff.name || !newStaff.telephone || !newStaff.address || !newStaff.username || !newStaff.email || !newStaff.role) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const updateData = { ...newStaff };
-      if (!updateData.password) {
-        delete updateData.password; // Don't update password if empty
-      }
-      
-      await mockApi.updateStaff(selectedStaff.id, updateData);
-      
-      toast({
-        title: "Success",
-        description: "Staff member updated successfully"
-      });
-      
-      setIsEditDialogOpen(false);
-      setSelectedStaff(null);
-      loadStaff(currentPage, searchTerm);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update staff member",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDeleteStaff = async () => {
-    if (!selectedStaff) return;
-
-    try {
-      await mockApi.deleteStaff(selectedStaff.id);
-      
-      toast({
-        title: "Success",
-        description: "Staff member deleted successfully"
-      });
-      
-      setIsDeleteDialogOpen(false);
-      setSelectedStaff(null);
-      loadStaff(currentPage, searchTerm);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete staff member",
-        variant: "destructive"
-      });
-    }
-  };
+ 
 
   const openEditDialog = (staffMember: Staff) => {
     setSelectedStaff(staffMember);
@@ -209,6 +152,30 @@ const StaffManagement = () => {
   const openDeleteDialog = (staffMember: Staff) => {
     setSelectedStaff(staffMember);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteStaff = async () => {
+    if (!selectedStaff) return;
+
+    try {
+      await deleteStaff(selectedStaff.id,jwtToken);
+      
+      toast({
+        title: "Success",
+        description: "Staff member deleted successfully",
+        variant: "default"
+      });
+      
+      setIsDeleteDialogOpen(false);
+      setSelectedStaff(null);
+      loadStaff(searchTerm);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete staff member",
+        variant: "destructive"
+      });
+    }
   };
 
   const getRoleBadgeVariant = (role: string) => {
@@ -338,39 +305,7 @@ const StaffManagement = () => {
               </div>
             )}
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-8">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => handlePageChange(page)}
-                        isActive={currentPage === page}
-                        className="cursor-pointer"
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-                  <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
+ 
         </>
       )}
 
@@ -445,14 +380,13 @@ const StaffManagement = () => {
             </div>
             <div>
               <Label htmlFor="staffRole">Role</Label>
-              <Select value={newStaff.role} onValueChange={(value) => setNewStaff({ ...newStaff, role: value })}>
+              <Select value={newStaff.role} onValueChange={(value) => setNewStaff({ ...newStaff, role: value == "MANAGER" ? "MANAGER" :  "CASHIER"  })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="MANAGER">Manager</SelectItem>
-                  <SelectItem value="CASHIER">Cashier</SelectItem>
-                  <SelectItem value="ASSISTANT">Assistant</SelectItem>
+                  <SelectItem value="CASHIER">Cashier</SelectItem> 
                 </SelectContent>
               </Select>
             </div>
@@ -467,99 +401,7 @@ const StaffManagement = () => {
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Edit Staff Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Staff Member</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleEditStaff} className="space-y-4">
-            <div>
-              <Label htmlFor="editStaffName">Full Name</Label>
-              <Input
-                id="editStaffName"
-                value={newStaff.name}
-                onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
-                placeholder="Enter full name"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="editStaffTelephone">Telephone</Label>
-              <Input
-                id="editStaffTelephone"
-                value={newStaff.telephone}
-                onChange={(e) => setNewStaff({ ...newStaff, telephone: e.target.value })}
-                placeholder="Enter telephone number"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="editStaffAddress">Address</Label>
-              <Input
-                id="editStaffAddress"
-                value={newStaff.address}
-                onChange={(e) => setNewStaff({ ...newStaff, address: e.target.value })}
-                placeholder="Enter address"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="editStaffUsername">Username</Label>
-              <Input
-                id="editStaffUsername"
-                value={newStaff.username}
-                onChange={(e) => setNewStaff({ ...newStaff, username: e.target.value })}
-                placeholder="Enter username"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="editStaffEmail">Email</Label>
-              <Input
-                id="editStaffEmail"
-                type="email"
-                value={newStaff.email}
-                onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
-                placeholder="Enter email address"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="editStaffPassword">Password (leave empty to keep current)</Label>
-              <Input
-                id="editStaffPassword"
-                type="password"
-                value={newStaff.password}
-                onChange={(e) => setNewStaff({ ...newStaff, password: e.target.value })}
-                placeholder="Enter new password"
-              />
-            </div>
-            <div>
-              <Label htmlFor="editStaffRole">Role</Label>
-              <Select value={newStaff.role} onValueChange={(value) => setNewStaff({ ...newStaff, role: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MANAGER">Manager</SelectItem>
-                  <SelectItem value="CASHIER">Cashier</SelectItem>
-                  <SelectItem value="ASSISTANT">Assistant</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">
-                Cancel
-              </Button>
-              <Button type="submit" className="flex-1">
-                Update Staff
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+ 
 
       {/* View Staff Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
@@ -627,9 +469,8 @@ const StaffManagement = () => {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+ 
+ <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>

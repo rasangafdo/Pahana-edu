@@ -1,4 +1,4 @@
-// src/api/itemApi.ts
+ 
 import api from './api';
 import { Item } from '../types/Item';
 import { PaginatedResponse } from '../types/PaginatedResponse';
