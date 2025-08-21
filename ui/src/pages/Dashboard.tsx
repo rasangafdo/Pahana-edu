@@ -28,6 +28,8 @@ import { getRecentSales } from "@/services/saleService";
 import { useAuth } from "@/context/AuthContext";
 import { Help } from "@/components/Help";
 import { Permission } from "@/components/Permission";
+import {  DashboardStat } from "@/types/AnalyticsTypes";
+import { getDashboardAnalytics } from "@/services/analyticsService";
 
 
 const Dashboard = () => {
@@ -35,30 +37,7 @@ const Dashboard = () => {
   const [recentSales, setRecentSales] = useState<Sale[]>([])
   const {toast} = useToast();
   const { isManager } = useAuth();
-
-  const stats = [
-    {
-      title: "Total Customers",
-      value: "1,247",
-      change: "+12%",
-      icon: Users,
-      color: "text-primary"
-    },
-    {
-      title: "Items in Stock",
-      value: "3,456",
-      change: "+8%",
-      icon: Package,
-      color: "text-success"
-    },
-    {
-      title: "Today's Sales (LKR)",
-      value: "24,680",
-      change: "+15%",
-      icon: DollarSign,
-      color: "text-warning"
-    }, 
-  ];
+  const [stats, setStats] = useState<DashboardStat[]>([])
 
   const loadRecentsale = async () => {
     try {
@@ -74,9 +53,26 @@ const Dashboard = () => {
     }
   };
 
+  const loadStats = async () => {
+    try {
+      const response = await getDashboardAnalytics ();
+      setStats(response);
+    } catch (error) {
+      console.error("Failed to load dashboard stats", error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard stats",
+        variant: "destructive"
+      });
+    }
+  }
+
+
+
 
     useEffect(() => {
     loadRecentsale();
+    loadStats();
     }, []);
   
   const renderDashboardContent = () => {

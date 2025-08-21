@@ -30,12 +30,14 @@ public class DaoFactory {
             return new SaleItemDaoImpl(); 
         case STAFF:
             return new StaffDaoImpl(); 
+        case ANALYTICS:
+            return new AnalyticsDaoImpl(); 
             default:
                 return null;
         }
     }
 
     public enum DaoTypes {
-    	 CATEGORY,CUSTOMER, ITEM,SALE,SALEITEM, STAFF;
+    	 CATEGORY,CUSTOMER, ITEM,SALE,SALEITEM, STAFF, ANALYTICS;
     }
 }

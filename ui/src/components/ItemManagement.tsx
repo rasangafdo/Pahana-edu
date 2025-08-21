@@ -22,6 +22,7 @@ import { PaginatedResponse } from '@/types/PaginatedResponse';
 import { createItem, getItems, getItemsByCategory, searchItems, updateItem } from '@/services/itemService';
 import { Item } from '@/types/Item';
 import { formatCurrency, renderPageNumbers } from '@/lib/utils';
+import { ItemAnalytics } from '@/types/AnalyticsTypes';
 
 const ItemManagement = () => {
   const [items, setItems] = useState<Item[]>([]);
@@ -46,8 +47,8 @@ const ItemManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+ const [itemsStats, setItemsStats] = useState<ItemAnalytics>(null)
 
-  const itemsPerPage = 6;
 
   // Load items with pagination
   const loadItems = async (page: number = 1, search?: string, categoryId?: number) => {
@@ -90,6 +91,8 @@ const ItemManagement = () => {
       });
     }
   };
+
+
 
   useEffect(() => {
     loadCategories();
@@ -317,14 +320,14 @@ const ItemManagement = () => {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {itemsStats && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <Package className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Total Items</p>
-                <p className="text-2xl font-bold">{items.length}</p>
+                <p className="text-2xl font-bold">{itemsStats.totalItems}</p>
               </div>
             </div>
           </CardContent>
@@ -335,7 +338,7 @@ const ItemManagement = () => {
               <Hash className="h-8 w-8 text-success" />
               <div>
                 <p className="text-sm text-muted-foreground">In Stock</p>
-                <p className="text-2xl font-bold">{items.reduce((sum, item) => sum + item.stockAvailable, 0)}</p>
+                <p className="text-2xl font-bold">{itemsStats.inStock}</p>
               </div>
             </div>
           </CardContent>
@@ -346,7 +349,7 @@ const ItemManagement = () => {
               <Tag className="h-8 w-8 text-warning" />
               <div>
                 <p className="text-sm text-muted-foreground">Categories</p>
-                <p className="text-2xl font-bold">{categories.length}</p>
+                <p className="text-2xl font-bold">{itemsStats.totalCategories}</p>
               </div>
             </div>
           </CardContent>
@@ -358,13 +361,13 @@ const ItemManagement = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Avg. Price</p>
                 <p className="text-2xl font-bold">
-                  {items.length > 0 ? formatCurrency(items.reduce((sum, item) => sum + item.unitPrice, 0) / items.length) : 'LKR 0.00'}
+                  {itemsStats.avgPriceTotal}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div>}
 
       {loading ? (
         <div className="text-center py-12">
