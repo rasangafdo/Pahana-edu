@@ -1,6 +1,7 @@
 package com.pahanaedu.model;
  
-import java.time.*; 
+import java.time.*;
+import java.util.List; 
 public class Sale { 
     private Long saleId;
 
@@ -15,6 +16,9 @@ public class Sale {
     private Double balance;
     private LocalDate saleDate;
     private LocalTime saleTime;
+
+    private String customerName;
+    private List<SaleItem> saleItems;
 
     private LocalDateTime lastUpdatedAt;
     
@@ -80,8 +84,20 @@ public class Sale {
 		this.lastUpdatedAt = lastUpdatedAt;
 	}
     
+	public String getCustomerName() {
+		return customerName;
+	}
+	
+	public void setCustomerName(String customerName) {
+		this.customerName = customerName;
+	}
     
+	public List<SaleItem> getSaleItems(){
+		return saleItems;
+	}
     
-    
+    public void setSaleItems(List<SaleItem> saleItems) {
+    	this.saleItems = saleItems;
+    }
     
 }

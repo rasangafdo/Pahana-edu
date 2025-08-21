@@ -45,6 +45,7 @@ public class ItemService {
     public boolean updateStock(Long id, int stock)throws Exception {
         Item item = itemDAO.get(id);
         if (item == null) return false;
+        stock += item.getStockAvailable();
         itemDAO.updateStock(id, stock);
         return true;
     }

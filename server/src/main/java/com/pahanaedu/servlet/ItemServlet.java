@@ -162,69 +162,20 @@ public class ItemServlet extends HttpServlet {
  
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try {
-            String pathInfo = req.getPathInfo(); // e.g., /123 or /updateStock
-            resp.setContentType("application/json");
+        try { 
+        	resp.setContentType("application/json");
 
-            if (pathInfo == null || pathInfo.equals("/")) {
+
+            Item item = Util.parseJsonBody(req, Item.class);
+            if (item == null || item.getItemId() == null) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Item ID or action required\"}");
+                resp.getWriter().write("{\"error\":\"Item id required for update\"}");
                 return;
             }
-
-            String[] splits = pathInfo.split("/");
-
-            if (splits.length >= 2) {
-                String action = splits[1];
-
-                switch (action) {
-                    case "updateStock": { // /api/items/updateStock?id=123&stock=50
-                        String idParam = req.getParameter("id");
-                        String stockParam = req.getParameter("stock");
-                        if (idParam == null || stockParam == null) {
-                            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                            resp.getWriter().write("{\"error\":\"id and stock parameters required\"}");
-                            return;
-                        }
-                        Long id = Long.parseLong(idParam);
-                        int stock = Integer.parseInt(stockParam);
-                        Item item = itemService.get(id);
-                        if (item == null) {
-                            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                            resp.getWriter().write("{\"error\":\"Item not found\"}");
-                            return;
-                        }
-                        itemService.updateStock(id, stock);
-                        resp.getWriter().write(objectMapper.writeValueAsString(itemService.get(id)));
-                        break;
-                    }
-
-                    case "updateDiscount": { // /api/items/updateDiscount?id=123&discount=10&qty=2
-                        String idParam = req.getParameter("id");
-                        String discountParam = req.getParameter("discount");
-                        String qtyParam = req.getParameter("qty");
-                        if (idParam == null || discountParam == null || qtyParam == null) {
-                            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                            resp.getWriter().write("{\"error\":\"id, discount, and qty parameters required\"}");
-                            return;
-                        }
-                        Long id = Long.parseLong(idParam);
-                        double discount = Double.parseDouble(discountParam);
-                        int qty = Integer.parseInt(qtyParam);
-                        Item item = itemService.get(id);
-                        if (item == null) {
-                            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                            resp.getWriter().write("{\"error\":\"Item not found\"}");
-                            return;
-                        }
-                        itemService.updateDiscount(id, discount, qty);
-                        resp.getWriter().write(objectMapper.writeValueAsString(itemService.get(id)));
-                        break;
-                    }
-
-                    default: { // treat as item ID for general update /api/items/123
+                     
+  // treat as item ID for general update /api/items/123
                         try {
-                            Long id = Long.parseLong(action);
+                            Long id = item.getItemId();
                             Item existing = itemService.get(id);
                             if (existing == null) {
                                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -232,12 +183,7 @@ public class ItemServlet extends HttpServlet {
                                 return;
                             }
 
-                            Item item = Util.parseJsonBody(req, Item.class);
-                            if (item == null) {
-                                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                                resp.getWriter().write("{\"error\":\"Invalid JSON body\"}");
-                                return;
-                            }
+                             
 
                             // check name conflict
                             if (item.getName() != null && itemService.existsByNameExcludingId(item.getName(), id)) {
@@ -246,7 +192,8 @@ public class ItemServlet extends HttpServlet {
                                 return;
                             }
 
-                            item.setItemId(id); // ensure ID is set
+                            int newstock = item.getStockAvailable() + existing.getStockAvailable();
+                            item.setStockAvailable(newstock);  
                             itemService.update(item);
                             resp.getWriter().write(objectMapper.writeValueAsString(itemService.get(id)));
 
@@ -256,11 +203,8 @@ public class ItemServlet extends HttpServlet {
                      } catch (NumberFormatException e) {
                             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                             resp.getWriter().write("{\"error\":\"Invalid item id\"}");
-                        }
-                        break;
-                    }
-                }
-            }
+                        }  
+            
         } catch (IllegalStateException e) {
             resp.setStatus(HttpServletResponse.SC_CONFLICT);
             resp.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");

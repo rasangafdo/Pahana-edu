@@ -1,8 +1,7 @@
 package com.pahanaedu.dao.custom;
 
 import com.pahanaedu.dao.CrudUtil;
-import com.pahanaedu.dto.PaginatedResponse;
-import com.pahanaedu.model.Item;
+import com.pahanaedu.dto.PaginatedResponse; 
 import com.pahanaedu.model.Sale;
 import com.pahanaedu.model.SaleItem; 
 
@@ -15,7 +14,7 @@ public class SaleItemDaoImpl implements SaleItemDao {
     @Override
     public boolean create(SaleItem t) throws Exception {
       return CrudUtil.executeUpdate("INSERT INTO sale_items (sale_id, item_id, qty, discount_amount, item_total) " +
-           "VALUES (?, ?, ?, ?, ?)", t.getSale().getSaleId(),t.getItem().getItemId(),t.getQty(),t.getDiscountAmount(),t.getItemTotal());
+           "VALUES (?, ?, ?, ?, ?)", t.getSaleId(),t.getItem().getItemId(),t.getQty(),t.getDiscountAmount(),t.getItemTotal());
              
     }
  
@@ -45,14 +44,10 @@ public class SaleItemDaoImpl implements SaleItemDao {
     private SaleItem mapResultSetToSaleItem(ResultSet rs) throws Exception {
         SaleItem si = new SaleItem();
         si.setSaleItemId(rs.getLong("sale_item_id"));
-
-        Item item = new Item();
-        item.setItemId(rs.getLong("item_id"));
-        si.setItem(item);
-
-        Sale sale = new Sale();
-        sale.setSaleId(rs.getLong("sale_id"));
-        si.setSale(sale);
+ 
+        si.setItemID(rs.getLong("item_id"));
+ 
+        si.setSaleId(rs.getLong("sale_id"));
 
         si.setQty(rs.getInt("qty"));
         si.setDiscountAmount(rs.getDouble("discount_amount"));

@@ -7,11 +7,12 @@ public class SaleItem {
 //    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long saleItemId;
 
-//    @ManyToOne
     private Item item;
+//    @ManyToOne
+    private Long itemId;
 
 //    @ManyToOne
-    private Sale sale;
+    private Long saleId;
 
     private int qty;
     private double discountAmount;
@@ -23,17 +24,17 @@ public class SaleItem {
 	public void setSaleItemId(Long saleItemId) {
 		this.saleItemId = saleItemId;
 	}
-	public Item getItem() {
-		return item;
+	public Long getItemID() {
+		return itemId;
 	}
-	public void setItem(Item item) {
-		this.item = item;
+	public void setItemID(Long itemId) {
+		this.itemId = itemId;
 	}
-	public Sale getSale() {
-		return sale;
+	public Long getSaleId() {
+		return saleId;
 	}
-	public void setSale(Sale sale) {
-		this.sale = sale;
+	public void setSaleId(Long saleId) {
+		this.saleId = saleId;
 	}
 	public int getQty() {
 		return qty;
@@ -60,6 +61,12 @@ public class SaleItem {
 		this.lastUpdatedAt = lastUpdatedAt;
 	}
     
+	public void setItem(Item item) {
+		this.item = item;
+	}
     
+	public Item getItem() {
+		return item;
+	}
     
 }

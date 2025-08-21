@@ -41,7 +41,15 @@ public class ItemDaoImpl implements ItemDao {
         Double unitPrice = Util.anyNullOrEmpty(item.getUnitPrice()) ? oldItem.getUnitPrice() : item.getUnitPrice();
         Integer stockAvailable = Util.anyNullOrEmpty(item.getStockAvailable()) ? oldItem.getStockAvailable() : item.getStockAvailable();
         Double discount = Util.anyNullOrEmpty(item.getDiscount())  ? oldItem.getDiscount() : item.getDiscount();
-        Integer qtyToAllowDiscount = Util.anyNullOrEmpty(item.getQtyToAllowDiscount()) ? oldItem.getQtyToAllowDiscount() : item.getQtyToAllowDiscount();
+        
+        Integer qtyToAllowDiscount;
+        if (discount == null || discount == 0.0) {
+            qtyToAllowDiscount = 1;
+        } else {
+            qtyToAllowDiscount = Util.anyNullOrEmpty(item.getQtyToAllowDiscount()) 
+                    ? oldItem.getQtyToAllowDiscount() 
+                    : item.getQtyToAllowDiscount();
+        }
         Long categoryId = Util.anyNullOrEmpty(item.getCategoryId()) ? oldItem.getCategoryId() : item.getCategoryId();
 
         // Perform update

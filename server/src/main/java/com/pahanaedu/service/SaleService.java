@@ -1,6 +1,7 @@
 package com.pahanaedu.service;
 
 import com.pahanaedu.dao.custom.SaleDaoImpl;
+import com.pahanaedu.dto.PaginatedResponse;
 import com.pahanaedu.model.Customer;
 import com.pahanaedu.model.Item;
 import com.pahanaedu.model.Sale;
@@ -21,7 +22,7 @@ public class SaleService {
     private final ItemDaoImpl itemDAO  = (ItemDaoImpl) DaoFactory.getInstance().getDao(DaoFactory.DaoTypes.ITEM);
     private final CustomerDaoImpl customerDAO  = (CustomerDaoImpl) DaoFactory.getInstance().getDao(DaoFactory.DaoTypes.CUSTOMER);
 
-    public Sale createSale(Customer customerInput, List<SaleItem> saleItems) throws Exception {
+    public Sale createSale(Customer customerInput, List<SaleItem> saleItems,double paid) throws Exception {
         Connection con = null;
         try {
         	 // 1 Find or create customer
@@ -89,16 +90,17 @@ public class SaleService {
             sale.setTotalAmount(total.doubleValue());
             sale.setPaid(0.0);     // You can adjust later
             sale.setBalance(total.doubleValue()); // assuming not paid yet
-
-            boolean saleSaved = saleDAO.create(sale);
-            if (!saleSaved) throw new Exception("Failed to save sale");
-
+            long saleId = saleDAO.createSale(sale);
+            if (saleId <= 0) throw new Exception("Failed to save sale");
+            sale.setSaleId(saleId);
             // 5 Save Sale Items
             for (SaleItem si : saleItems) {
-                si.setSale(sale);
+                si.setSaleId(saleId);
                 boolean itemSaved = saleItemDAO.create(si);
                 if (!itemSaved) throw new Exception("Failed to save sale item");
             }
+            double balance =  paid - total.doubleValue();
+            saleDAO.updatePayment(saleId, paid, balance);
 
             con.commit(); //  commit all
             return sale;
@@ -114,4 +116,32 @@ public class SaleService {
             }
         }
     }
+    
+    public PaginatedResponse<Sale> getSalesByCustomer(Customer customer, int page) throws Exception {
+        PaginatedResponse<Sale> paginatedSales = saleDAO.getSalesByCustomer(customer, page);
+ 
+
+        return paginatedSales;
+    }
+    
+    public Sale get(Long id) throws Exception {
+ 	return saleDAO.get(id);
+   
+    }
+
+    public PaginatedResponse<Sale> getAll(int page) throws Exception{
+        PaginatedResponse<Sale> paginatedSales = saleDAO.getAll(page);
+        
+        return paginatedSales;
+    }
+    
+    
+    public List<Sale> getRecent5Sales() throws Exception{
+    	return saleDAO.getRecentSales(5);
+    }
+    
+    public boolean updatePayment(long saleId,double paid, double balance) throws Exception {
+    	return saleDAO.updatePayment(saleId, paid, balance);
+    }
+    
 }

@@ -28,4 +28,30 @@ public class CrudUtil {
         return getPreparedStatement(sql, args).executeQuery();
     }
     
+    public static long executeInsert(String sql, Object... args) throws Exception {
+        Connection connection = DBConnection.getInstance().getConnection();
+        PreparedStatement statement = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
+
+        if(args != null){
+            for (int i = 0; i < args.length; i++) {
+                statement.setObject(i + 1, args[i]);
+            }
+        }
+
+        int affectedRows = statement.executeUpdate();
+
+        if (affectedRows == 0) {
+            throw new Exception("Insert failed, no rows affected.");
+        }
+
+        try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+            if (generatedKeys.next()) {
+                return generatedKeys.getLong(1); // return generated id
+            } else {
+                throw new Exception("Insert failed, no ID obtained.");
+            }
+        }
+    }
+
+    
 }
